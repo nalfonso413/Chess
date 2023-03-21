@@ -3,6 +3,8 @@
 import 'package:flutter/material.dart';
 import 'main.dart';
 
+// MAKE CHESSBOARD THE HOMEPAGE WIDGET LMOAO
+
 class Chessboard {
   /// Variables
 
