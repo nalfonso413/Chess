@@ -216,46 +216,51 @@ class _MyHomePageState extends State<MyHomePage> {
         });
       }
 
-      // if player has already selected a piece
-      // do chess movement
-      // else do the rest
-      // Get Selection Variables
-      SelectedRow = row;
-      SelectedColumn = col;
-      SelectedPiece = board[SelectedRow][SelectedColumn];
+      // Check if button position was a possible position
+      if (CheckPossiblePositions(row, col)) {
+        // Chess Movement
 
-      // Update Widget
-      setState(() {
-        SelectedPiece.Selected = true;
-      });
-    }
+      } else {
+        // Get Selection Variables
+        SelectedRow = row;
+        SelectedColumn = col;
+        SelectedPiece = board[SelectedRow][SelectedColumn];
 
-    // Make sure a Piece is Selected
-    if (SelectedRow != -1 || SelectedColumn != -1 || !SelectedPiece.IsEmpty()) {
-      // Get Pieces Moves
-      List PieceMoves = board[SelectedRow][SelectedColumn].CheckMoves();
-
-      // Get all possible moves
-      for (int i = 0; i < PieceMoves.length; i++) {
-        // Make sure PossibleMoves exist on the board
-        if (SelectedRow + PieceMoves[i][0] >= 0 &&
-            SelectedRow + PieceMoves[i][0] <= 7 &&
-            SelectedColumn + PieceMoves[i][1] >= 0 &&
-            SelectedColumn + PieceMoves[i][1] <= 7) {
-          PossibleMoves.add([
-            SelectedRow + PieceMoves[i][0],
-            SelectedColumn + PieceMoves[i][1]
-          ]);
-        }
+        // Update Widget
+        setState(() {
+          SelectedPiece.Selected = true;
+        });
       }
 
-      // check for other pieces on possiblemoves
-      // if opposite color then kill kill kill
+      // Make sure a Piece is Selected
+      if (SelectedRow != -1 ||
+          SelectedColumn != -1 ||
+          !SelectedPiece.IsEmpty()) {
+        // Get Pieces Moves
+        List PieceMoves = board[SelectedRow][SelectedColumn].CheckMoves();
 
-      // Compare PossibleMoves to board
-      TogglePossiblePositions();
+        // Get all possible moves
+        for (int i = 0; i < PieceMoves.length; i++) {
+          // Make sure PossibleMoves exist on the board
+          if (SelectedRow + PieceMoves[i][0] >= 0 &&
+              SelectedRow + PieceMoves[i][0] <= 7 &&
+              SelectedColumn + PieceMoves[i][1] >= 0 &&
+              SelectedColumn + PieceMoves[i][1] <= 7) {
+            PossibleMoves.add([
+              SelectedRow + PieceMoves[i][0],
+              SelectedColumn + PieceMoves[i][1]
+            ]);
+          }
+        }
 
-      // change color of appropriate widgets
+        // check for other pieces on possiblemoves
+        // if opposite color then kill kill kill
+
+        // Compare PossibleMoves to board
+        TogglePossiblePositions();
+
+        // change color of appropriate widgets
+      }
     }
   }
 
@@ -271,6 +276,16 @@ class _MyHomePageState extends State<MyHomePage> {
         boardPiece.PossiblePosition = !boardPiece.PossiblePosition;
       });
     }
+  }
+
+  // Checks if any of the Possible Positions matches the row and column
+  bool CheckPossiblePositions(int row, int column) {
+    for (int i = 0; i < PossibleMoves.length; i++) {
+      if (row == PossibleMoves[i][0] && column == PossibleMoves[i][1]) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // App
@@ -472,6 +487,8 @@ ElevatedButton chessboardSquareWidget(
   int RowPosition = row;
   int ColumnPosition = col;
   int SquareColor = RowPosition + (ColumnPosition % 2);
+
+  // INSTEAD OF HAVING A PIECE USE A REFERENCE TO THE BOARD AND GET PIECE FROM THERE
 
   return ElevatedButton(
     onPressed: () {
