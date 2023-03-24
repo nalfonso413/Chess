@@ -155,14 +155,14 @@ class _MyHomePageState extends State<MyHomePage> {
     chessboardWidget = Container(
       child: Column(
         children: [
-          chessboardRowWidget(0, board[0], this),
-          chessboardRowWidget(1, board[1], this),
-          chessboardRowWidget(2, board[2], this),
-          chessboardRowWidget(3, board[3], this),
-          chessboardRowWidget(4, board[4], this),
-          chessboardRowWidget(5, board[5], this),
-          chessboardRowWidget(6, board[6], this),
-          chessboardRowWidget(7, board[7], this),
+          chessboardRowWidget(0, this),
+          chessboardRowWidget(1, this),
+          chessboardRowWidget(2, this),
+          chessboardRowWidget(3, this),
+          chessboardRowWidget(4, this),
+          chessboardRowWidget(5, this),
+          chessboardRowWidget(6, this),
+          chessboardRowWidget(7, this),
         ],
       ),
     );
@@ -465,28 +465,29 @@ class Piece {
 }
 
 // Widget Row
-Row chessboardRowWidget(int row, List board, _MyHomePageState homepage) {
+Row chessboardRowWidget(int row, _MyHomePageState homepage) {
   int RowPosition = row;
   return Row(
     children: [
-      chessboardSquareWidget(row, 0, board[0], homepage),
-      chessboardSquareWidget(row, 1, board[1], homepage),
-      chessboardSquareWidget(row, 2, board[2], homepage),
-      chessboardSquareWidget(row, 3, board[3], homepage),
-      chessboardSquareWidget(row, 4, board[4], homepage),
-      chessboardSquareWidget(row, 5, board[5], homepage),
-      chessboardSquareWidget(row, 6, board[6], homepage),
-      chessboardSquareWidget(row, 7, board[7], homepage),
+      chessboardSquareWidget(row, 0, homepage),
+      chessboardSquareWidget(row, 1, homepage),
+      chessboardSquareWidget(row, 2, homepage),
+      chessboardSquareWidget(row, 3, homepage),
+      chessboardSquareWidget(row, 4, homepage),
+      chessboardSquareWidget(row, 5, homepage),
+      chessboardSquareWidget(row, 6, homepage),
+      chessboardSquareWidget(row, 7, homepage),
     ],
   );
 }
 
 // Widget Square
 ElevatedButton chessboardSquareWidget(
-    int row, int col, Piece piece, _MyHomePageState homepage) {
+    int row, int col, _MyHomePageState homepage) {
   int RowPosition = row;
   int ColumnPosition = col;
   int SquareColor = RowPosition + (ColumnPosition % 2);
+  Piece piece = homepage.GetBoard()[row][col];
 
   // INSTEAD OF HAVING A PIECE USE A REFERENCE TO THE BOARD AND GET PIECE FROM THERE
 
