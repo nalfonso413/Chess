@@ -217,7 +217,6 @@ class _MyHomePageState extends State<MyHomePage> {
       }
 
       // if player has already selected a piece
-      if ()
       // do chess movement
       // else do the rest
       // Get Selection Variables
