@@ -143,6 +143,12 @@ class _MyHomePageState extends State<MyHomePage> {
   // Selected Column
   int SelectedColumn = -1;
 
+  /// Selected Piece
+  Piece SelectedPiece = Piece(-1, -1);
+
+  /// Possible Moves for Selected Piece
+  List PossibleMoves = [];
+
   /// Constructor
   void Intialize() {
     // Set up Board
@@ -188,29 +194,84 @@ class _MyHomePageState extends State<MyHomePage> {
     // Unselect if possible
     // recolor board squares to normal
 
+    // Toggle Possible Positions
+    TogglePossiblePositions();
+
+    // Empty Possible Positions
+    PossibleMoves.clear();
+
+    // Unselect if player chose the same piece as last time
     if (row == SelectedRow && col == SelectedColumn) {
       setState(() {
-        board[SelectedRow][SelectedColumn].Selected = false; // setstate
+        SelectedPiece.Selected = false;
       });
       SelectedRow = -1;
       SelectedColumn = -1;
+      SelectedPiece = Piece(-1, -1);
     } else {
+      // Unselect if player chooses a piece with no prior selection
       if (SelectedColumn != -1 && SelectedColumn != -1) {
         setState(() {
-          board[SelectedRow][SelectedColumn].Selected = false; // setstate
+          SelectedPiece.Selected = false;
         });
       }
 
+      // if player has already selected a piece
+      if ()
+      // do chess movement
+      // else do the rest
+      // Get Selection Variables
       SelectedRow = row;
       SelectedColumn = col;
+      SelectedPiece = board[SelectedRow][SelectedColumn];
+
+      // Update Widget
       setState(() {
-        board[SelectedRow][SelectedColumn].Selected = true; // setstate
+        SelectedPiece.Selected = true;
       });
     }
 
-    // get piece
-    // check possible moves
-    // change color of appropriate widgets
+    // Make sure a Piece is Selected
+    if (SelectedRow != -1 || SelectedColumn != -1 || !SelectedPiece.IsEmpty()) {
+      // Get Pieces Moves
+      List PieceMoves = board[SelectedRow][SelectedColumn].CheckMoves();
+
+      // Get all possible moves
+      for (int i = 0; i < PieceMoves.length; i++) {
+        // Make sure PossibleMoves exist on the board
+        if (SelectedRow + PieceMoves[i][0] >= 0 &&
+            SelectedRow + PieceMoves[i][0] <= 7 &&
+            SelectedColumn + PieceMoves[i][1] >= 0 &&
+            SelectedColumn + PieceMoves[i][1] <= 7) {
+          PossibleMoves.add([
+            SelectedRow + PieceMoves[i][0],
+            SelectedColumn + PieceMoves[i][1]
+          ]);
+        }
+      }
+
+      // check for other pieces on possiblemoves
+      // if opposite color then kill kill kill
+
+      // Compare PossibleMoves to board
+      TogglePossiblePositions();
+
+      // change color of appropriate widgets
+    }
+  }
+
+  // Toggle Possible Positions pieces
+  void TogglePossiblePositions() {
+    Piece boardPiece = Piece(-1, -1);
+    for (int i = 0; i < PossibleMoves.length; i++) {
+      // Set boardPiece
+      boardPiece = board[PossibleMoves[i][0]][PossibleMoves[i][1]];
+
+      // Toggle
+      setState(() {
+        boardPiece.PossiblePosition = !boardPiece.PossiblePosition;
+      });
+    }
   }
 
   // App
@@ -246,6 +307,13 @@ class Piece {
   Container ChessPiece = Container(); // TOdo
 
   // Pawn First Turn
+  bool FirstTurn = true;
+
+  // Can Jump
+  bool CanJump = false;
+
+  // is a Possible Position
+  bool PossiblePosition = false;
 
   /// Constructor
   Piece(int ty, int te) {
@@ -270,6 +338,8 @@ class Piece {
           color: Team % 2 == 0 ? Colors.white : Colors.black,
           child: Icon(Icons.snowshoeing),
         );
+
+        CanJump = true;
         break;
 
       case (2): // Bishop
@@ -314,8 +384,67 @@ class Piece {
 
   /// Methods
 
-  // check possible moves
-  void CheckMoves() {}
+  // Is empty
+  bool IsEmpty() {
+    if (this.Type == -1 || this.Team == -1) {
+      return true;
+    }
+
+    return false;
+  }
+
+  bool ComparePieces(Piece p) {
+    //not used
+    if (this.Type == p.Type && this.Team == p.Team) {
+      return true;
+    }
+    return false;
+  }
+
+  // Positions the piece can move
+  List CheckMoves() {
+    List Moves = [];
+    switch (Type) {
+      case 0: // Pawn
+        if (Team == 0) {
+          if (FirstTurn) {
+            Moves = [
+              [-1, 0], // Move Up 1
+              [-2, 0], // Move Up 2
+              [-1, -1], // Move Up Left 1
+              [-1, 1], // Move Up Right 1
+            ];
+          } else {
+            Moves = [
+              [-1, 0], // Move Up 1
+              [-1, -1], // Move Up Left 1
+              [-1, 1], // Move Up Right 1
+            ];
+          }
+        } else {
+          if (FirstTurn) {
+            Moves = [
+              [1, 0], // Move Down 1
+              [2, 0], // Move Down 2
+              [1, -1], // Move Down Left 1
+              [1, 1], // Move Down Right 1
+            ];
+          } else {
+            Moves = [
+              [1, 0], // Move Down
+              [1, -1], // Move Down Left 1
+              [1, 1], // Move Down Right 11
+            ];
+          }
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    return Moves;
+  }
 
   // Piece is Captured
   void Captured() {}
@@ -348,17 +477,19 @@ ElevatedButton chessboardSquareWidget(
   return ElevatedButton(
     onPressed: () {
       homepage.Selected(RowPosition, ColumnPosition);
-      print(
-          "RowPosition: $RowPosition ColumnPosition: $ColumnPosition Selected: ${piece.Selected}");
+      //print("RowPosition: $RowPosition ColumnPosition: $ColumnPosition Selected: ${piece.Selected}");
     },
     style: ButtonStyle(
       fixedSize: MaterialStateProperty.all<Size>(Size(100, 100)),
-      backgroundColor: piece.Selected
-          ? MaterialStateProperty.all<Color>(Colors.green.shade100)
-          : SquareColor % 2 == 0
-              ? MaterialStateProperty.all<Color>(Colors.orange.shade100)
-              : MaterialStateProperty.all<Color>(Colors.brown.shade900),
+      backgroundColor: piece.PossiblePosition
+          ? MaterialStateProperty.all<Color>(Colors.green.shade500)
+          : piece.Selected
+              ? MaterialStateProperty.all<Color>(Colors.green.shade100)
+              : SquareColor % 2 == 0
+                  ? MaterialStateProperty.all<Color>(Colors.orange.shade100)
+                  : MaterialStateProperty.all<Color>(Colors.brown.shade900),
     ),
     child: piece.ChessPiece,
   );
+  ;
 }
