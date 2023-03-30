@@ -222,7 +222,7 @@ class _MyHomePageState extends State<MyHomePage> {
         TogglePossiblePositions();
 
         // Empty Original Position
-        board[SelectedRow][SelectedColumn] = Piece(-1, 1);
+        board[SelectedRow][SelectedColumn] = Piece(-1, -1);
 
         // Move Piece
         board[row][col] = SelectedPiece;
@@ -309,10 +309,11 @@ class _MyHomePageState extends State<MyHomePage> {
         */
 
         // Get all possible moves
-        List LastMove = PieceMoves[0];
         bool keepGoing = true;
 
-        print("------");
+        //print("SelectedPiece Team: ${SelectedPiece.Team}");
+        //print("SelectedPiece Type: ${SelectedPiece.Type}");
+        //print("------");
 
         // Find PossibleMoves
         for (int i = 0; i < PieceMoves.length; i++) {
@@ -325,20 +326,21 @@ class _MyHomePageState extends State<MyHomePage> {
                 SelectedColumn + PieceMoves[i][j][1] <= 7) {
               // If Current Move isn't moving in the same direction as LastMove OR if it's the same
 
-              print(" Current Move: ${PieceMoves[i][j]}");
-              print("  Last Move: $LastMove");
+              //print(" Current Move: ${PieceMoves[i][j]}");
 
               //keepGoing = true;
               //print("   keepingGoing Condition");
-              print("    keepGoing: $keepGoing");
+              //print("  keepGoing: $keepGoing");
 
               if (keepGoing) {
                 int r = (SelectedRow + PieceMoves[i][j][0]).toInt();
                 int c = (SelectedColumn + PieceMoves[i][j][1]).toInt();
                 // Check if Piece team is the same as SelectedPiece
                 if (board[r][c].Team == SelectedPiece.Team) {
-                  keepGoing = false;
-                  print("     1: $r , $c");
+                  if (!SelectedPiece.CanJump) {
+                    keepGoing = false;
+                  }
+                  //print("   1: $r , $c");
                 } else {
                   // Check if Piece is empty
                   if (board[r][c].IsEmpty()) {
@@ -346,7 +348,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       SelectedRow + PieceMoves[i][j][0],
                       SelectedColumn + PieceMoves[i][j][1]
                     ]);
-                    print("     2: $r , $c");
+                    //print("   2: $r , $c");
 
                     // Check if Piece is Enemy
                   } else {
@@ -355,13 +357,13 @@ class _MyHomePageState extends State<MyHomePage> {
                       SelectedColumn + PieceMoves[i][j][1]
                     ]);
 
-                    keepGoing = false;
-                    print("     3: $r , $c");
+                    if (!SelectedPiece.CanJump) {
+                      keepGoing = false;
+                    }
+                    //print("   3: $r , $c");
                   }
                 }
               }
-
-              LastMove = PieceMoves[i][j];
             }
           }
         }
@@ -538,7 +540,6 @@ class Piece {
 
   // Positions the piece can move
 
-  // Moves all must be ordered in Up, Right, Down, Left, UpRight, DownRight, DownLeft, UpLeft
   List CheckMoves() {
     List Moves = [];
     switch (Type) {
@@ -579,7 +580,28 @@ class Piece {
           }
         }
         break;
-
+      case 1: // Knight
+        Moves = [
+          [
+            // 2 Up 1 Left
+            [-2, -1],
+            // 2 Up 1 Right
+            [-2, 1],
+            // 1 Up 2 Left
+            [-1, -2],
+            // 1 Up 2 Right
+            [-1, 2],
+            // 2 Down 1 Left
+            [2, -1],
+            // 2 Down 1 Right
+            [2, 1],
+            // 1 Down 2 Left
+            [1, -2],
+            // 1 Down 2 Right
+            [1, 2],
+          ],
+        ];
+        break;
       case 2: // Bishop
         Moves = [
           // Up
@@ -698,7 +720,134 @@ class Piece {
           [],
         ];
         break;
+      case 4: // Queen
+        Moves = [
+          // Up
+          [
+            [-1, 0],
+            [-2, 0],
+            [-3, 0],
+            [-4, 0],
+            [-5, 0],
+            [-6, 0],
+            [-7, 0],
+          ],
 
+          // Right
+          [
+            [0, 1],
+            [0, 2],
+            [0, 3],
+            [0, 4],
+            [0, 5],
+            [0, 6],
+            [0, 7],
+          ],
+
+          // Down
+          [
+            [1, 0],
+            [2, 0],
+            [3, 0],
+            [4, 0],
+            [5, 0],
+            [6, 0],
+            [7, 0],
+          ],
+
+          // Left
+          [
+            [0, -1],
+            [0, -2],
+            [0, -3],
+            [0, -4],
+            [0, -5],
+            [0, -6],
+            [0, -7],
+          ],
+
+          // Up Right
+          [
+            [-1, 1],
+            [-2, 2],
+            [-3, 3],
+            [-4, 4],
+            [-5, 5],
+            [-6, 6],
+            [-7, 7],
+          ],
+
+          // Down Right
+          [
+            [1, 1],
+            [2, 2],
+            [3, 3],
+            [4, 4],
+            [5, 5],
+            [6, 6],
+            [7, 7],
+          ],
+
+          // Down Left
+          [
+            [1, -1],
+            [2, -2],
+            [3, -3],
+            [4, -4],
+            [5, -5],
+            [6, -6],
+            [7, -7],
+          ],
+
+          // Up Left
+          [
+            [-1, -1],
+            [-2, -2],
+            [-3, -3],
+            [-4, -4],
+            [-5, -5],
+            [-6, -6],
+            [-7, -7],
+          ],
+        ];
+        break;
+
+      case 5: // King
+        Moves = [
+          // Up
+          [
+            [-1, 0]
+          ],
+          // Right
+          [
+            [0, 1]
+          ],
+          // Left
+          [
+            [0, -1]
+          ],
+          // Down
+          [
+            [1, 0]
+          ],
+          // Up Right
+          [
+            [-1, 1]
+          ],
+          // Down Right
+          [
+            [1, 1]
+          ],
+          // Down Left
+          [
+            [1, -1]
+          ],
+          // Up Left
+          [
+            [-1, -1]
+          ],
+        ];
+        break;
       default:
         break;
     }
