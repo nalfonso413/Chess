@@ -272,6 +272,14 @@ class _MyHomePageState extends State<MyHomePage> {
         if (SelectedPiece.Type == 0) {
           // White
           if (SelectedPiece.Team == 0) {
+            // If there is a black piece to diagonally right 1
+            if (SelectedRow - 1 >= 0 &&
+                SelectedColumn + 1 < 8 &&
+                !board[SelectedRow - 1][SelectedColumn + 1].IsEmpty() &&
+                board[SelectedRow - 1][SelectedColumn + 1].Team == 1) {
+              PieceMoves.add([-1, 1]); // Move Up Right 1
+            }
+
             // If there is a black piece to diagonally left 1
             if (SelectedRow - 1 >= 0 &&
                 SelectedColumn - 1 >= 0 &&
@@ -279,29 +287,22 @@ class _MyHomePageState extends State<MyHomePage> {
                 board[SelectedRow - 1][SelectedColumn - 1].Team == 1) {
               PieceMoves.add([-1, -1]); // Move Up Left 1
             }
-            // If there is a black piece to diagonally right DOESNT CHECK FOR +1
-            if (SelectedRow - 1 >= 0 &&
-                SelectedColumn + 1 < 8 &&
-                !board[SelectedRow - 1][SelectedColumn + 1].IsEmpty() &&
-                board[SelectedRow - 1][SelectedColumn + 1].Team == 1) {
-              PieceMoves.add([-1, 1]); // Move Up Right 1
-            }
           } else if (SelectedPiece.Team == 1) {
             // Black
-
-            // If there is a white piece to diagonally left DOESNT CHECK FOR -1
-            if (SelectedRow + 1 < 8 &&
-                SelectedColumn - 1 >= 0 &&
-                !board[SelectedRow + 1][SelectedColumn - 1].IsEmpty() &&
-                board[SelectedRow + 1][SelectedColumn - 1].Team == 0) {
-              PieceMoves.add([1, -1]); // Move Down Left 1
-            }
-            // If there is a white piece to diagonally right DOESNT CHECK FOR +1
+            // If there is a white piece to diagonally right
             if (SelectedRow + 1 < 8 &&
                 SelectedColumn + 1 < 8 &&
                 !board[SelectedRow + 1][SelectedColumn + 1].IsEmpty() &&
                 board[SelectedRow + 1][SelectedColumn + 1].Team == 0) {
               PieceMoves.add([1, 1]); // Move Down Right 1
+            }
+
+            // If there is a white piece to diagonally left
+            if (SelectedRow + 1 < 8 &&
+                SelectedColumn - 1 >= 0 &&
+                !board[SelectedRow + 1][SelectedColumn - 1].IsEmpty() &&
+                board[SelectedRow + 1][SelectedColumn - 1].Team == 0) {
+              PieceMoves.add([1, -1]); // Move Down Left 1
             }
           }
         }
@@ -310,9 +311,9 @@ class _MyHomePageState extends State<MyHomePage> {
         List LastMove = PieceMoves[0];
         bool keepGoing = true;
 
-        // Find PossibleMoves
         print("------");
 
+        // Find PossibleMoves
         for (int i = 0; i < PieceMoves.length; i++) {
           // Make sure PossibleMoves exist on the board
           if (SelectedRow + PieceMoves[i][0] >= 0 &&
@@ -320,21 +321,66 @@ class _MyHomePageState extends State<MyHomePage> {
               SelectedColumn + PieceMoves[i][1] >= 0 &&
               SelectedColumn + PieceMoves[i][1] <= 7) {
             // If Current Move isn't moving in the same direction as LastMove OR if it's the same
+
             print("Current Move: ${PieceMoves[i]}");
             print("Last Move: $LastMove");
 
             // If piece should check same direction
-
-            // Moves will not always end with 7
-            //
-            if ((LastMove[1] == 0 && PieceMoves[i][1] != 0) ||
-                (LastMove[0] == 0 && PieceMoves[i][0] != 0) ||
+            //(BUGGED BECAUSE IT DOES NOT CHECK FOR DIAGONALS PROPERLY WHICH STOPS PAWN'S KILL MOVES FROM WORKING PROPERLY)
+            // Horizontal Switch
+            // if one before is horizontal and current isnt, then switch
+            if ((LastMove[1] != 0 && PieceMoves[i][1] == 0) ||
+                // Vertical Switch
+                (LastMove[0] != 0 && PieceMoves[i][0] == 0) ||
+                // Up Right Switch (-1, 1)
+                (LastMove[0] == 0 &&
+                    PieceMoves[i][0] < 0 &&
+                    PieceMoves[i][1] > 0) ||
+                // Down Right Check (1, 1)
+                (LastMove[0] < 0 &&
+                    LastMove[1] > 0 &&
+                    PieceMoves[i][0] > 0 &&
+                    PieceMoves[i][1] > 0) ||
+                // Down Left Check (1, -1)
+                (LastMove[0] > 0 &&
+                    LastMove[1] > 0 &&
+                    PieceMoves[i][0] > 0 &&
+                    PieceMoves[i][1] < 0) ||
+                // Up Left Check (-1, -1)
+                (LastMove[0] > 0 &&
+                    LastMove[1] < 0 &&
+                    PieceMoves[i][0] < 0 &&
+                    PieceMoves[i][1] < 0) ||
                 (LastMove == PieceMoves[i])) {
               keepGoing = true;
+              //print("keepingGoing Condition");
+
+              // almost working
+              /*
+ // Up Right Switch (-1, 1)
+                (LastMove[0] > 0 &&
+                    LastMove[1] < 0 &&
+                    PieceMoves[i][0] > 0 &&
+                    PieceMoves[i][1] < 0) ||
+                // Down Right Check (1, 1)
+                (LastMove[0] < 0 &&
+                    LastMove[1] < 0 &&
+                    PieceMoves[i][0] > 0 &&
+                    PieceMoves[i][1] > 0) ||
+                // Down Left Check (1, -1)
+                (LastMove[0] < 0 &&
+                    LastMove[1] > 0 &&
+                    PieceMoves[i][0] > 0 &&
+                    PieceMoves[i][1] < 0) ||
+                // Up Left Check (-1, -1)
+                (LastMove[0] > 0 &&
+                    LastMove[1] > 0 &&
+                    PieceMoves[i][0] < 0 &&
+                    PieceMoves[i][1] < 0) ||
+              */
             }
             print("keepGoing: $keepGoing");
 
-            // keepGoing = true
             if (keepGoing) {
               int r = (SelectedRow + PieceMoves[i][0]).toInt();
               int c = (SelectedColumn + PieceMoves[i][1]).toInt();
@@ -357,6 +403,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     SelectedRow + PieceMoves[i][0],
                     SelectedColumn + PieceMoves[i][1]
                   ]);
+
                   keepGoing = false;
                   print("3: $r , $c");
                 }
@@ -366,24 +413,6 @@ class _MyHomePageState extends State<MyHomePage> {
             LastMove = PieceMoves[i];
           }
         }
-
-        /*
-          if last piece != -99, 99
-            if current piece is not going in the same direction as last piece or is equal
-              keepgoing true
-
-            if keepgoing
-              is there a same color piece?
-                do not add same color piece pos
-                keepgoing = false
-              is there opposing color piece? 
-                add same color piece pos
-                keepgoing = false
-              else (no piece)
-                add position
-            
-          LastMove = piece just checked
-        */
 
         // check for other pieces on possiblemoves
         // if opposite color then kill kill kill
@@ -557,7 +586,7 @@ class Piece {
 
   // Positions the piece can move
 
-  // Moves all must be ordered in Up, Right, Down, Left
+  // Moves all must be ordered in Up, Right, Down, Left, UpRight, DownRight, DownLeft, UpLeft
   List CheckMoves() {
     List Moves = [];
     switch (Type) {
@@ -587,6 +616,45 @@ class Piece {
         }
         break;
 
+      case 2: // Bishop
+        Moves = [
+          // Up Right
+          [-1, 1],
+          [-2, 2],
+          [-3, 3],
+          [-4, 4],
+          [-5, 5],
+          [-6, 6],
+          [-7, 7],
+
+          // Down Right
+          [1, 1],
+          [2, 2],
+          [3, 3],
+          [4, 4],
+          [5, 5],
+          [6, 6],
+          [7, 7],
+
+          // Down Left
+          [1, -1],
+          [2, -2],
+          [3, -3],
+          [4, -4],
+          [5, -5],
+          [6, -6],
+          [7, -7],
+
+          // Up Left
+          [-1, -1],
+          [-2, -2],
+          [-3, -3],
+          [-4, -4],
+          [-5, -5],
+          [-6, -6],
+          [-7, -7],
+        ];
+        break;
       case 3: // Rook
         Moves = [
           // Up
