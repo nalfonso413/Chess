@@ -268,7 +268,6 @@ class _MyHomePageState extends State<MyHomePage> {
         // Get Pieces Moves
         List PieceMoves = SelectedPiece.CheckMoves();
 
-        /* Pawn Specific Kill Move
         if (SelectedPiece.Type == 0) {
           // White
           if (SelectedPiece.Team == 0) {
@@ -277,7 +276,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 SelectedColumn + 1 < 8 &&
                 !board[SelectedRow - 1][SelectedColumn + 1].IsEmpty() &&
                 board[SelectedRow - 1][SelectedColumn + 1].Team == 1) {
-              PieceMoves.add([-1, 1]); // Move Up Right 1
+              PieceMoves.add([
+                [-1, 1]
+              ]); // Move Up Right 1
             }
 
             // If there is a black piece to diagonally left 1
@@ -285,7 +286,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 SelectedColumn - 1 >= 0 &&
                 !board[SelectedRow - 1][SelectedColumn - 1].IsEmpty() &&
                 board[SelectedRow - 1][SelectedColumn - 1].Team == 1) {
-              PieceMoves.add([-1, -1]); // Move Up Left 1
+              PieceMoves.add([
+                [-1, -1]
+              ]); // Move Up Left 1
             }
           } else if (SelectedPiece.Team == 1) {
             // Black
@@ -294,7 +297,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 SelectedColumn + 1 < 8 &&
                 !board[SelectedRow + 1][SelectedColumn + 1].IsEmpty() &&
                 board[SelectedRow + 1][SelectedColumn + 1].Team == 0) {
-              PieceMoves.add([1, 1]); // Move Down Right 1
+              PieceMoves.add([
+                [1, 1]
+              ]); // Move Down Right 1
             }
 
             // If there is a white piece to diagonally left
@@ -302,11 +307,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 SelectedColumn - 1 >= 0 &&
                 !board[SelectedRow + 1][SelectedColumn - 1].IsEmpty() &&
                 board[SelectedRow + 1][SelectedColumn - 1].Team == 0) {
-              PieceMoves.add([1, -1]); // Move Down Left 1
+              PieceMoves.add([
+                [1, -1]
+              ]); // Move Down Left 1
             }
           }
         }
-        */
 
         // Get all possible moves
         bool keepGoing = true;
@@ -352,11 +358,20 @@ class _MyHomePageState extends State<MyHomePage> {
 
                     // Check if Piece is Enemy
                   } else {
-                    PossibleMoves.add([
-                      SelectedRow + PieceMoves[i][j][0],
-                      SelectedColumn + PieceMoves[i][j][1]
-                    ]);
+                    // If piece is not a Pawn
+                    if ((SelectedPiece.Type != 0) ||
+                        // OR if Piece IS a pawn AND current move is [-1, 0] or [1, 0]
 
+                        (SelectedPiece.Type == 0 &&
+                            ((PieceMoves[i][j][0] != -1 ||
+                                    PieceMoves[i][j][0] != 1) &&
+                                PieceMoves[i][j][1] != 0))) {
+                      PossibleMoves.add([
+                        SelectedRow + PieceMoves[i][j][0],
+                        SelectedColumn + PieceMoves[i][j][1]
+                      ]);
+                    }
+//
                     if (!SelectedPiece.CanJump) {
                       keepGoing = false;
                     }
