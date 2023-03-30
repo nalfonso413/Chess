@@ -268,7 +268,7 @@ class _MyHomePageState extends State<MyHomePage> {
         // Get Pieces Moves
         List PieceMoves = SelectedPiece.CheckMoves();
 
-        // Pawn Specific Kill Move
+        /* Pawn Specific Kill Move
         if (SelectedPiece.Type == 0) {
           // White
           if (SelectedPiece.Team == 0) {
@@ -306,6 +306,7 @@ class _MyHomePageState extends State<MyHomePage> {
             }
           }
         }
+        */
 
         // Get all possible moves
         List LastMove = PieceMoves[0];
@@ -315,102 +316,53 @@ class _MyHomePageState extends State<MyHomePage> {
 
         // Find PossibleMoves
         for (int i = 0; i < PieceMoves.length; i++) {
-          // Make sure PossibleMoves exist on the board
-          if (SelectedRow + PieceMoves[i][0] >= 0 &&
-              SelectedRow + PieceMoves[i][0] <= 7 &&
-              SelectedColumn + PieceMoves[i][1] >= 0 &&
-              SelectedColumn + PieceMoves[i][1] <= 7) {
-            // If Current Move isn't moving in the same direction as LastMove OR if it's the same
+          keepGoing = true;
+          for (int j = 0; j < PieceMoves[i].length; j++) {
+            // Make sure PossibleMoves exist on the board
+            if (SelectedRow + PieceMoves[i][j][0] >= 0 &&
+                SelectedRow + PieceMoves[i][j][0] <= 7 &&
+                SelectedColumn + PieceMoves[i][j][1] >= 0 &&
+                SelectedColumn + PieceMoves[i][j][1] <= 7) {
+              // If Current Move isn't moving in the same direction as LastMove OR if it's the same
 
-            print("Current Move: ${PieceMoves[i]}");
-            print("Last Move: $LastMove");
+              print(" Current Move: ${PieceMoves[i][j]}");
+              print("  Last Move: $LastMove");
 
-            // If piece should check same direction
-            //(BUGGED BECAUSE IT DOES NOT CHECK FOR DIAGONALS PROPERLY WHICH STOPS PAWN'S KILL MOVES FROM WORKING PROPERLY)
-            // Horizontal Switch
-            // if one before is horizontal and current isnt, then switch
-            if ((LastMove[1] != 0 && PieceMoves[i][1] == 0) ||
-                // Vertical Switch
-                (LastMove[0] != 0 && PieceMoves[i][0] == 0) ||
-                // Up Right Switch (-1, 1)
-                (LastMove[0] == 0 &&
-                    PieceMoves[i][0] < 0 &&
-                    PieceMoves[i][1] > 0) ||
-                // Down Right Check (1, 1)
-                (LastMove[0] < 0 &&
-                    LastMove[1] > 0 &&
-                    PieceMoves[i][0] > 0 &&
-                    PieceMoves[i][1] > 0) ||
-                // Down Left Check (1, -1)
-                (LastMove[0] > 0 &&
-                    LastMove[1] > 0 &&
-                    PieceMoves[i][0] > 0 &&
-                    PieceMoves[i][1] < 0) ||
-                // Up Left Check (-1, -1)
-                (LastMove[0] > 0 &&
-                    LastMove[1] < 0 &&
-                    PieceMoves[i][0] < 0 &&
-                    PieceMoves[i][1] < 0) ||
-                (LastMove == PieceMoves[i])) {
-              keepGoing = true;
-              //print("keepingGoing Condition");
+              //keepGoing = true;
+              //print("   keepingGoing Condition");
+              print("    keepGoing: $keepGoing");
 
-              // almost working
-              /*
- // Up Right Switch (-1, 1)
-                (LastMove[0] > 0 &&
-                    LastMove[1] < 0 &&
-                    PieceMoves[i][0] > 0 &&
-                    PieceMoves[i][1] < 0) ||
-                // Down Right Check (1, 1)
-                (LastMove[0] < 0 &&
-                    LastMove[1] < 0 &&
-                    PieceMoves[i][0] > 0 &&
-                    PieceMoves[i][1] > 0) ||
-                // Down Left Check (1, -1)
-                (LastMove[0] < 0 &&
-                    LastMove[1] > 0 &&
-                    PieceMoves[i][0] > 0 &&
-                    PieceMoves[i][1] < 0) ||
-                // Up Left Check (-1, -1)
-                (LastMove[0] > 0 &&
-                    LastMove[1] > 0 &&
-                    PieceMoves[i][0] < 0 &&
-                    PieceMoves[i][1] < 0) ||
-              */
-            }
-            print("keepGoing: $keepGoing");
-
-            if (keepGoing) {
-              int r = (SelectedRow + PieceMoves[i][0]).toInt();
-              int c = (SelectedColumn + PieceMoves[i][1]).toInt();
-              // Check if Piece team is the same as SelectedPiece
-              if (board[r][c].Team == SelectedPiece.Team) {
-                keepGoing = false;
-                print("1: $r , $c");
-              } else {
-                // Check if Piece is empty
-                if (board[r][c].IsEmpty()) {
-                  PossibleMoves.add([
-                    SelectedRow + PieceMoves[i][0],
-                    SelectedColumn + PieceMoves[i][1]
-                  ]);
-                  print("2: $r , $c");
-
-                  // Check if Piece is Enemy
-                } else {
-                  PossibleMoves.add([
-                    SelectedRow + PieceMoves[i][0],
-                    SelectedColumn + PieceMoves[i][1]
-                  ]);
-
+              if (keepGoing) {
+                int r = (SelectedRow + PieceMoves[i][j][0]).toInt();
+                int c = (SelectedColumn + PieceMoves[i][j][1]).toInt();
+                // Check if Piece team is the same as SelectedPiece
+                if (board[r][c].Team == SelectedPiece.Team) {
                   keepGoing = false;
-                  print("3: $r , $c");
+                  print("     1: $r , $c");
+                } else {
+                  // Check if Piece is empty
+                  if (board[r][c].IsEmpty()) {
+                    PossibleMoves.add([
+                      SelectedRow + PieceMoves[i][j][0],
+                      SelectedColumn + PieceMoves[i][j][1]
+                    ]);
+                    print("     2: $r , $c");
+
+                    // Check if Piece is Enemy
+                  } else {
+                    PossibleMoves.add([
+                      SelectedRow + PieceMoves[i][j][0],
+                      SelectedColumn + PieceMoves[i][j][1]
+                    ]);
+
+                    keepGoing = false;
+                    print("     3: $r , $c");
+                  }
                 }
               }
-            }
 
-            LastMove = PieceMoves[i];
+              LastMove = PieceMoves[i][j];
+            }
           }
         }
 
@@ -594,23 +546,35 @@ class Piece {
         if (Team == 0) {
           if (FirstTurn) {
             Moves = [
-              [-1, 0], // Move Up 1
-              [-2, 0], // Move Up 2
+              // Up
+              [
+                [-1, 0],
+                [-2, 0],
+              ],
             ];
           } else {
             Moves = [
-              [-1, 0], // Move Up 1
+              // Up
+              [
+                [-1, 0],
+              ]
             ];
           }
         } else {
           if (FirstTurn) {
             Moves = [
-              [1, 0], // Move Down 1
-              [2, 0], // Move Down 2
+              // Down
+              [
+                [1, 0],
+                [2, 0],
+              ]
             ];
           } else {
             Moves = [
-              [1, 0], // Move Down
+              // Down
+              [
+                [1, 0], // Move Down
+              ]
             ];
           }
         }
@@ -618,80 +582,120 @@ class Piece {
 
       case 2: // Bishop
         Moves = [
+          // Up
+          [],
+
+          // Right
+          [],
+
+          // Down
+          [],
+
+          // Left
+          [],
+
           // Up Right
-          [-1, 1],
-          [-2, 2],
-          [-3, 3],
-          [-4, 4],
-          [-5, 5],
-          [-6, 6],
-          [-7, 7],
+          [
+            [-1, 1],
+            [-2, 2],
+            [-3, 3],
+            [-4, 4],
+            [-5, 5],
+            [-6, 6],
+            [-7, 7],
+          ],
 
           // Down Right
-          [1, 1],
-          [2, 2],
-          [3, 3],
-          [4, 4],
-          [5, 5],
-          [6, 6],
-          [7, 7],
+          [
+            [1, 1],
+            [2, 2],
+            [3, 3],
+            [4, 4],
+            [5, 5],
+            [6, 6],
+            [7, 7],
+          ],
 
           // Down Left
-          [1, -1],
-          [2, -2],
-          [3, -3],
-          [4, -4],
-          [5, -5],
-          [6, -6],
-          [7, -7],
+          [
+            [1, -1],
+            [2, -2],
+            [3, -3],
+            [4, -4],
+            [5, -5],
+            [6, -6],
+            [7, -7],
+          ],
 
           // Up Left
-          [-1, -1],
-          [-2, -2],
-          [-3, -3],
-          [-4, -4],
-          [-5, -5],
-          [-6, -6],
-          [-7, -7],
+          [
+            [-1, -1],
+            [-2, -2],
+            [-3, -3],
+            [-4, -4],
+            [-5, -5],
+            [-6, -6],
+            [-7, -7],
+          ],
         ];
         break;
       case 3: // Rook
         Moves = [
           // Up
-          [-1, 0],
-          [-2, 0],
-          [-3, 0],
-          [-4, 0],
-          [-5, 0],
-          [-6, 0],
-          [-7, 0],
+          [
+            [-1, 0],
+            [-2, 0],
+            [-3, 0],
+            [-4, 0],
+            [-5, 0],
+            [-6, 0],
+            [-7, 0],
+          ],
 
           // Right
-          [0, 1],
-          [0, 2],
-          [0, 3],
-          [0, 4],
-          [0, 5],
-          [0, 6],
-          [0, 7],
+          [
+            [0, 1],
+            [0, 2],
+            [0, 3],
+            [0, 4],
+            [0, 5],
+            [0, 6],
+            [0, 7],
+          ],
 
           // Down
-          [1, 0],
-          [2, 0],
-          [3, 0],
-          [4, 0],
-          [5, 0],
-          [6, 0],
-          [7, 0],
+          [
+            [1, 0],
+            [2, 0],
+            [3, 0],
+            [4, 0],
+            [5, 0],
+            [6, 0],
+            [7, 0],
+          ],
 
           // Left
-          [0, -1],
-          [0, -2],
-          [0, -3],
-          [0, -4],
-          [0, -5],
-          [0, -6],
-          [0, -7],
+          [
+            [0, -1],
+            [0, -2],
+            [0, -3],
+            [0, -4],
+            [0, -5],
+            [0, -6],
+            [0, -7],
+          ],
+
+          // Up Right
+          [],
+
+          // Down Right
+          [],
+
+          // Down Left
+          [],
+
+          // Down Left
+          [],
         ];
         break;
 
