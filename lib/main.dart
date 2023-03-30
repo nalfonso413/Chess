@@ -194,23 +194,23 @@ class _MyHomePageState extends State<MyHomePage> {
     // Unselect if possible
     // recolor board squares to normal
 
-    // Toggle Possible Positions
-    TogglePossiblePositions();
-
-    // Empty Possible Positions
-    PossibleMoves.clear();
-
     // Unselect if player chose the same piece as last time
     if (row == SelectedRow && col == SelectedColumn) {
       setState(() {
         SelectedPiece.Selected = false;
       });
-      SelectedRow = -1;
-      SelectedColumn = -1;
-      SelectedPiece = Piece(-1, -1);
+
+      // Empty Selection
+      SetSelectedPiece(-1, -1, Piece(-1, -1));
+
+      // Toggle Possible Positions
+      TogglePossiblePositions();
+
+      // Empty Possible Positions
+      PossibleMoves.clear();
     } else {
-      // Unselect if player chooses a piece with no prior selection
-      if (SelectedColumn != -1 && SelectedColumn != -1) {
+      // Unselect previous
+      if (row != -1 && col != -1) {
         setState(() {
           SelectedPiece.Selected = false;
         });
@@ -218,9 +218,43 @@ class _MyHomePageState extends State<MyHomePage> {
 
       // Check if button position was a possible position
       if (CheckPossiblePositions(row, col)) {
-        // Chess Movement
+        // Toggle Possible Positions
+        TogglePossiblePositions();
 
+        // Empty Original Position
+        board[SelectedRow][SelectedColumn] = Piece(-1, 1);
+
+        // Move Piece
+        board[row][col] = SelectedPiece;
+
+        // Do Piece Specific things
+        switch (SelectedPiece.Type) {
+          case 0: // Pawn
+            // First Turn
+            SelectedPiece.FirstTurn = false;
+            break;
+
+          default:
+            break;
+        }
+
+        // Empty Selections
+        SetSelectedPiece(-1, -1, Piece(-1, -1));
+
+        // Empty Possible Positions
+        PossibleMoves.clear();
+
+        // Opposing player in check?
+
+        // Toggle Turn
+        ToggleTurn();
       } else {
+        // Toggle Possible Positions
+        TogglePossiblePositions();
+
+        // Empty Possible Positions
+        PossibleMoves.clear();
+
         // Get Selection Variables
         SelectedRow = row;
         SelectedColumn = col;
@@ -230,28 +264,126 @@ class _MyHomePageState extends State<MyHomePage> {
         setState(() {
           SelectedPiece.Selected = true;
         });
-      }
 
-      // Make sure a Piece is Selected
-      if (SelectedRow != -1 ||
-          SelectedColumn != -1 ||
-          !SelectedPiece.IsEmpty()) {
         // Get Pieces Moves
-        List PieceMoves = board[SelectedRow][SelectedColumn].CheckMoves();
+        List PieceMoves = SelectedPiece.CheckMoves();
+
+        // Pawn Specific Kill Move
+        if (SelectedPiece.Type == 0) {
+          // White
+          if (SelectedPiece.Team == 0) {
+            // If there is a black piece to diagonally left 1
+            if (SelectedRow - 1 >= 0 &&
+                SelectedColumn - 1 >= 0 &&
+                !board[SelectedRow - 1][SelectedColumn - 1].IsEmpty() &&
+                board[SelectedRow - 1][SelectedColumn - 1].Team == 1) {
+              PieceMoves.add([-1, -1]); // Move Up Left 1
+            }
+            // If there is a black piece to diagonally right DOESNT CHECK FOR +1
+            if (SelectedRow - 1 >= 0 &&
+                SelectedColumn + 1 < 8 &&
+                !board[SelectedRow - 1][SelectedColumn + 1].IsEmpty() &&
+                board[SelectedRow - 1][SelectedColumn + 1].Team == 1) {
+              PieceMoves.add([-1, 1]); // Move Up Right 1
+            }
+          } else if (SelectedPiece.Team == 1) {
+            // Black
+
+            // If there is a white piece to diagonally left DOESNT CHECK FOR -1
+            if (SelectedRow + 1 < 8 &&
+                SelectedColumn - 1 >= 0 &&
+                !board[SelectedRow + 1][SelectedColumn - 1].IsEmpty() &&
+                board[SelectedRow + 1][SelectedColumn - 1].Team == 0) {
+              PieceMoves.add([1, -1]); // Move Down Left 1
+            }
+            // If there is a white piece to diagonally right DOESNT CHECK FOR +1
+            if (SelectedRow + 1 < 8 &&
+                SelectedColumn + 1 < 8 &&
+                !board[SelectedRow + 1][SelectedColumn + 1].IsEmpty() &&
+                board[SelectedRow + 1][SelectedColumn + 1].Team == 0) {
+              PieceMoves.add([1, 1]); // Move Down Right 1
+            }
+          }
+        }
 
         // Get all possible moves
+        List LastMove = PieceMoves[0];
+        bool keepGoing = true;
+
+        // Find PossibleMoves
+        print("------");
+
         for (int i = 0; i < PieceMoves.length; i++) {
           // Make sure PossibleMoves exist on the board
           if (SelectedRow + PieceMoves[i][0] >= 0 &&
               SelectedRow + PieceMoves[i][0] <= 7 &&
               SelectedColumn + PieceMoves[i][1] >= 0 &&
               SelectedColumn + PieceMoves[i][1] <= 7) {
-            PossibleMoves.add([
-              SelectedRow + PieceMoves[i][0],
-              SelectedColumn + PieceMoves[i][1]
-            ]);
+            // If Current Move isn't moving in the same direction as LastMove OR if it's the same
+            print("Current Move: ${PieceMoves[i]}");
+            print("Last Move: $LastMove");
+
+            // If piece should check same direction
+
+            // Moves will not always end with 7
+            //
+            if ((LastMove[1] == 0 && PieceMoves[i][1] != 0) ||
+                (LastMove[0] == 0 && PieceMoves[i][0] != 0) ||
+                (LastMove == PieceMoves[i])) {
+              keepGoing = true;
+            }
+            print("keepGoing: $keepGoing");
+
+            // keepGoing = true
+            if (keepGoing) {
+              int r = (SelectedRow + PieceMoves[i][0]).toInt();
+              int c = (SelectedColumn + PieceMoves[i][1]).toInt();
+              // Check if Piece team is the same as SelectedPiece
+              if (board[r][c].Team == SelectedPiece.Team) {
+                keepGoing = false;
+                print("1: $r , $c");
+              } else {
+                // Check if Piece is empty
+                if (board[r][c].IsEmpty()) {
+                  PossibleMoves.add([
+                    SelectedRow + PieceMoves[i][0],
+                    SelectedColumn + PieceMoves[i][1]
+                  ]);
+                  print("2: $r , $c");
+
+                  // Check if Piece is Enemy
+                } else {
+                  PossibleMoves.add([
+                    SelectedRow + PieceMoves[i][0],
+                    SelectedColumn + PieceMoves[i][1]
+                  ]);
+                  keepGoing = false;
+                  print("3: $r , $c");
+                }
+              }
+            }
+
+            LastMove = PieceMoves[i];
           }
         }
+
+        /*
+          if last piece != -99, 99
+            if current piece is not going in the same direction as last piece or is equal
+              keepgoing true
+
+            if keepgoing
+              is there a same color piece?
+                do not add same color piece pos
+                keepgoing = false
+              is there opposing color piece? 
+                add same color piece pos
+                keepgoing = false
+              else (no piece)
+                add position
+            
+          LastMove = piece just checked
+        */
 
         // check for other pieces on possiblemoves
         // if opposite color then kill kill kill
@@ -281,11 +413,19 @@ class _MyHomePageState extends State<MyHomePage> {
   // Checks if any of the Possible Positions matches the row and column
   bool CheckPossiblePositions(int row, int column) {
     for (int i = 0; i < PossibleMoves.length; i++) {
+      // Check for piece specific things (ie pawn kills, en passant)
       if (row == PossibleMoves[i][0] && column == PossibleMoves[i][1]) {
         return true;
       }
     }
     return false;
+  }
+
+  // Sets Selected Piece, Column, and Row
+  void SetSelectedPiece(int row, int column, Piece p) {
+    SelectedRow = row;
+    SelectedColumn = column;
+    SelectedPiece = p;
   }
 
   // App
@@ -416,6 +556,8 @@ class Piece {
   }
 
   // Positions the piece can move
+
+  // Moves all must be ordered in Up, Right, Down, Left
   List CheckMoves() {
     List Moves = [];
     switch (Type) {
@@ -425,14 +567,10 @@ class Piece {
             Moves = [
               [-1, 0], // Move Up 1
               [-2, 0], // Move Up 2
-              [-1, -1], // Move Up Left 1
-              [-1, 1], // Move Up Right 1
             ];
           } else {
             Moves = [
               [-1, 0], // Move Up 1
-              [-1, -1], // Move Up Left 1
-              [-1, 1], // Move Up Right 1
             ];
           }
         } else {
@@ -440,17 +578,53 @@ class Piece {
             Moves = [
               [1, 0], // Move Down 1
               [2, 0], // Move Down 2
-              [1, -1], // Move Down Left 1
-              [1, 1], // Move Down Right 1
             ];
           } else {
             Moves = [
               [1, 0], // Move Down
-              [1, -1], // Move Down Left 1
-              [1, 1], // Move Down Right 11
             ];
           }
         }
+        break;
+
+      case 3: // Rook
+        Moves = [
+          // Up
+          [-1, 0],
+          [-2, 0],
+          [-3, 0],
+          [-4, 0],
+          [-5, 0],
+          [-6, 0],
+          [-7, 0],
+
+          // Right
+          [0, 1],
+          [0, 2],
+          [0, 3],
+          [0, 4],
+          [0, 5],
+          [0, 6],
+          [0, 7],
+
+          // Down
+          [1, 0],
+          [2, 0],
+          [3, 0],
+          [4, 0],
+          [5, 0],
+          [6, 0],
+          [7, 0],
+
+          // Left
+          [0, -1],
+          [0, -2],
+          [0, -3],
+          [0, -4],
+          [0, -5],
+          [0, -6],
+          [0, -7],
+        ];
         break;
 
       default:
@@ -483,13 +657,14 @@ Row chessboardRowWidget(int row, _MyHomePageState homepage) {
 
 // Widget Square
 ElevatedButton chessboardSquareWidget(
-    int row, int col, _MyHomePageState homepage) {
+  int row,
+  int col,
+  _MyHomePageState homepage,
+) {
   int RowPosition = row;
   int ColumnPosition = col;
   int SquareColor = RowPosition + (ColumnPosition % 2);
   Piece piece = homepage.GetBoard()[row][col];
-
-  // INSTEAD OF HAVING A PIECE USE A REFERENCE TO THE BOARD AND GET PIECE FROM THERE
 
   return ElevatedButton(
     onPressed: () {
@@ -508,5 +683,4 @@ ElevatedButton chessboardSquareWidget(
     ),
     child: piece.ChessPiece,
   );
-  ;
 }
