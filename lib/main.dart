@@ -153,6 +153,9 @@ class _MyHomePageState extends State<MyHomePage> {
   /// Possible Moves for Selected Piece
   List PossibleMoves = [];
 
+  // Promotion Widget Visibility
+  bool CanPromote = false;
+
   /// Constructor
   void Intialize() {
     // Set up Board
@@ -183,6 +186,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
   /// Setters
 
+  // Promote
+  void SetCanPromote(bool b) {
+    setState(() {
+      CanPromote = b;
+    });
+  }
   // Check for king check
 
   // Check for win
@@ -190,7 +199,9 @@ class _MyHomePageState extends State<MyHomePage> {
   // Switch Turn
 
   void ToggleTurn() {
-    Turn = Turn == 0 ? 1 : 0;
+    setState(() {
+      Turn = Turn == 0 ? 1 : 0;
+    });
 
     if (Turn == 1) {
       if (EnPassantBlackPawn.length > 0) {
@@ -268,23 +279,30 @@ class _MyHomePageState extends State<MyHomePage> {
               }
             }
 
-            //print("EnPassant: ${SelectedPiece.EnPassant}");
+            if ((SelectedPiece.Team == 0 && row == 0) ||
+                (SelectedPiece.Team == 1 && row == 7)) {
+              SetCanPromote(true);
+              SelectedRow = row;
+              SelectedColumn = col;
+            }
             break;
 
           default:
             break;
         }
 
-        // Empty Selections
-        SetSelectedPiece(-1, -1, Piece(-1, -1));
-
         // Empty Possible Positions
         PossibleMoves.clear();
+
+        // Empty Selections
 
         // Opposing player in check?
 
         // Toggle Turn
-        ToggleTurn();
+        if (!CanPromote) {
+          SetSelectedPiece(-1, -1, Piece(-1, -1));
+          ToggleTurn();
+        }
       } else {
         // Toggle Possible Positions
         TogglePossiblePositions();
@@ -293,13 +311,16 @@ class _MyHomePageState extends State<MyHomePage> {
         PossibleMoves.clear();
 
         // Get Selection Variables
-        SelectedRow = row;
-        SelectedColumn = col;
-        SelectedPiece = board[SelectedRow][SelectedColumn];
+        if (!CanPromote) {
+          SelectedRow = row;
+          SelectedColumn = col;
+          SelectedPiece = board[SelectedRow][SelectedColumn];
+        }
 
         if (SelectedRow != -1 &&
             SelectedColumn != -1 &&
-            board[SelectedRow][SelectedColumn].Team == Turn) {
+            board[SelectedRow][SelectedColumn].Team == Turn &&
+            !CanPromote) {
           // Update Widget
           setState(() {
             SelectedPiece.Selected = true;
@@ -496,9 +517,10 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Center(
-        child: GetChessboardWidget(),
-      ),
+      body: Column(children: [
+        GetChessboardWidget(),
+        promotionWidget(CanPromote, Turn, this),
+      ]),
     );
   }
 }
@@ -983,5 +1005,60 @@ ElevatedButton chessboardSquareWidget(
                   : MaterialStateProperty.all<Color>(Colors.brown.shade900),
     ),
     child: piece.ChessPiece,
+  );
+}
+
+// Promote Widget
+Visibility promotionWidget(
+    bool IsVisible, int Turn, _MyHomePageState homepage) {
+  ButtonStyle promoteButtonStyle = ButtonStyle(
+      backgroundColor: Turn == 0
+          ? MaterialStateProperty.all<Color>(Colors.white)
+          : MaterialStateProperty.all<Color>(Colors.black));
+
+  void Promote(int type) {
+    homepage.board[homepage.SelectedRow][homepage.SelectedColumn] =
+        Piece(type, homepage.Turn);
+    homepage.SetSelectedPiece(-1, -1, Piece(-1, -1));
+    homepage.SetCanPromote(false);
+    homepage.ToggleTurn();
+  }
+
+  return Visibility(
+    visible: IsVisible,
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Queen
+        ElevatedButton(
+          onPressed: () {
+            Promote(4);
+          },
+          child: Text("Queen"),
+          style: promoteButtonStyle,
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Promote(3);
+          },
+          child: Text("Rook"),
+          style: promoteButtonStyle,
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Promote(2);
+          },
+          child: Text("Bishop"),
+          style: promoteButtonStyle,
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Promote(1);
+          },
+          child: Text("Knight"),
+          style: promoteButtonStyle,
+        ),
+      ],
+    ),
   );
 }
