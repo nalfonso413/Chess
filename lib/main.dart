@@ -156,8 +156,9 @@ class _MyHomePageState extends State<MyHomePage> {
   // Promotion / Widget Visibility
   bool CanPromote = false;
 
-  // Is Castling
-  bool IsCastling = false;
+  // King Danger Zones
+  List WhiteDangerZones = [];
+  List BlackDangerZones = [];
 
   /// Constructor
   void Intialize() {
@@ -254,6 +255,21 @@ class _MyHomePageState extends State<MyHomePage> {
         // Empty Original Position
         board[SelectedRow][SelectedColumn] = Piece(-1, -1);
 
+        // Delete from teams
+        if (!board[row][col].IsEmpty()) {
+          if (board[row][col].Team == 0) {
+            if (Piece.WhiteTeam.contains(board[row][col])) {
+              Piece.WhiteTeam.remove(board[row][col]);
+              print("White Team Length: ${Piece.WhiteTeam.length} ");
+            }
+          } else if (board[row][col].Team == 1) {
+            if (Piece.BlackTeam.contains(board[row][col])) {
+              Piece.BlackTeam.remove(board[row][col]);
+
+              print("Black Team Length: ${Piece.BlackTeam.length} ");
+            }
+          }
+        }
         // Move Piece
         board[row][col] = SelectedPiece;
 
@@ -371,196 +387,7 @@ class _MyHomePageState extends State<MyHomePage> {
             SelectedPiece.Selected = true;
           });
 
-          // Get Pieces Moves
-          List PieceMoves = SelectedPiece.CheckMoves();
-
-          // Piece Specific Moves
-          switch (SelectedPiece.Type) {
-            case 0: // Pawn (Kill Move)
-              // White
-              if (SelectedPiece.Team == 0) {
-                // If there is a black piece to diagonally right 1 OR there is an enemy pawn to the right that has EnPassant
-                if ((SelectedRow - 1 >= 0 &&
-                        SelectedColumn + 1 < 8 &&
-                        !board[SelectedRow - 1][SelectedColumn + 1].IsEmpty() &&
-                        board[SelectedRow - 1][SelectedColumn + 1].Team == 1) ||
-                    ((SelectedColumn + 1 < 8 &&
-                        board[SelectedRow][SelectedColumn + 1].Team == 1 &&
-                        board[SelectedRow][SelectedColumn + 1].Type == 0 &&
-                        board[SelectedRow][SelectedColumn + 1].EnPassant &&
-                        board[SelectedRow - 1][SelectedColumn + 1]
-                            .IsEmpty()))) {
-                  PieceMoves.add([
-                    [-1, 1]
-                  ]); // Move Up Right 1
-                  //print("EnPassant Possible");
-                }
-                // (enemy pawn is to right, -1 1 is empty)
-                // If there is a black piece to diagonally left 1 OR there is an enemy pawn to the left that has EnPassant
-                if ((SelectedRow - 1 >= 0 &&
-                        SelectedColumn - 1 >= 0 &&
-                        !board[SelectedRow - 1][SelectedColumn - 1].IsEmpty() &&
-                        board[SelectedRow - 1][SelectedColumn - 1].Team == 1) ||
-                    ((SelectedColumn - 1 >= 0 &&
-                        board[SelectedRow][SelectedColumn - 1].Team == 1 &&
-                        board[SelectedRow][SelectedColumn - 1].Type == 0 &&
-                        board[SelectedRow][SelectedColumn - 1].EnPassant &&
-                        board[SelectedRow - 1][SelectedColumn - 1]
-                            .IsEmpty()))) {
-                  PieceMoves.add([
-                    [-1, -1]
-                  ]); // Move Up Left 1
-                }
-              } else if (SelectedPiece.Team == 1) {
-                // Black
-                // If there is a white piece to diagonally right OR there is an enemy pawn to the right that has EnPassant
-                if ((SelectedRow + 1 < 8 &&
-                        SelectedColumn + 1 < 8 &&
-                        !board[SelectedRow + 1][SelectedColumn + 1].IsEmpty() &&
-                        board[SelectedRow + 1][SelectedColumn + 1].Team == 0) ||
-                    ((SelectedColumn + 1 < 8 &&
-                        board[SelectedRow][SelectedColumn + 1].Team == 0 &&
-                        board[SelectedRow][SelectedColumn + 1].Type == 0 &&
-                        board[SelectedRow][SelectedColumn + 1].EnPassant &&
-                        board[SelectedRow - 1][SelectedColumn + 1]
-                            .IsEmpty()))) {
-                  PieceMoves.add([
-                    [1, 1]
-                  ]); // Move Down Right 1
-                }
-
-                // If there is a white piece to diagonally left OR there is an enemy pawn to the left that has EnPassant
-                if ((SelectedRow + 1 < 8 &&
-                        SelectedColumn - 1 >= 0 &&
-                        !board[SelectedRow + 1][SelectedColumn - 1].IsEmpty() &&
-                        board[SelectedRow + 1][SelectedColumn - 1].Team == 0) ||
-                    ((SelectedColumn - 1 >= 0 &&
-                        board[SelectedRow][SelectedColumn - 1].Team == 0 &&
-                        board[SelectedRow][SelectedColumn - 1].Type == 0 &&
-                        board[SelectedRow][SelectedColumn - 1].EnPassant &&
-                        board[SelectedRow - 1][SelectedColumn - 1]
-                            .IsEmpty()))) {
-                  PieceMoves.add([
-                    [1, -1]
-                  ]); // Move Down Left 1
-                }
-              }
-              break;
-
-            case 5: // King (Castling)
-              if (SelectedPiece.FirstTurn) {
-                if (SelectedPiece.Team == 0) {
-                  if (board[7][0].Type == 3 &&
-                      board[7][0].FirstTurn &&
-                      board[7][1].IsEmpty() &&
-                      board[7][2].IsEmpty() &&
-                      board[7][3].IsEmpty()) {
-                    PieceMoves.add([
-                      [0, -2]
-                    ]);
-                  }
-
-                  if (board[7][7].Type == 3 &&
-                      board[7][7].FirstTurn &&
-                      board[7][5].IsEmpty() &&
-                      board[7][6].IsEmpty()) {
-                    PieceMoves.add([
-                      [0, 2]
-                    ]);
-                  }
-                } else if (SelectedPiece.Team == 1) {
-                  if (board[0][0].Type == 3 &&
-                      board[0][0].FirstTurn &&
-                      board[0][1].IsEmpty() &&
-                      board[0][2].IsEmpty() &&
-                      board[0][3].IsEmpty()) {
-                    PieceMoves.add([
-                      [0, -2]
-                    ]);
-                  }
-                  if (board[0][7].Type == 3 &&
-                      board[0][7].FirstTurn &&
-                      board[0][5].IsEmpty() &&
-                      board[0][6].IsEmpty()) {
-                    PieceMoves.add([
-                      [0, 2]
-                    ]);
-                  }
-                }
-              }
-              break;
-
-            default:
-              break;
-          }
-
-          // Get all possible moves
-          bool keepGoing = true;
-
-          //print("SelectedPiece Team: ${SelectedPiece.Team}");
-          //print("SelectedPiece Type: ${SelectedPiece.Type}");
-          //print("------");
-
-          // Find PossibleMoves
-          for (int i = 0; i < PieceMoves.length; i++) {
-            keepGoing = true;
-            for (int j = 0; j < PieceMoves[i].length; j++) {
-              // Make sure PossibleMoves exist on the board
-              if (SelectedRow + PieceMoves[i][j][0] >= 0 &&
-                  SelectedRow + PieceMoves[i][j][0] <= 7 &&
-                  SelectedColumn + PieceMoves[i][j][1] >= 0 &&
-                  SelectedColumn + PieceMoves[i][j][1] <= 7) {
-                // If Current Move isn't moving in the same direction as LastMove OR if it's the same
-
-                //print(" Current Move: ${PieceMoves[i][j]}");
-
-                //keepGoing = true;
-                //print("   keepingGoing Condition");
-                //print("  keepGoing: $keepGoing");
-
-                if (keepGoing) {
-                  int r = (SelectedRow + PieceMoves[i][j][0]).toInt();
-                  int c = (SelectedColumn + PieceMoves[i][j][1]).toInt();
-                  // Check if Piece team is the same as SelectedPiece
-                  if (board[r][c].Team == SelectedPiece.Team) {
-                    if (!SelectedPiece.CanJump) {
-                      keepGoing = false;
-                    }
-                    //print("   1: $r , $c");
-                  } else {
-                    // Check if Piece is empty
-                    if (board[r][c].IsEmpty()) {
-                      PossibleMoves.add([
-                        SelectedRow + PieceMoves[i][j][0],
-                        SelectedColumn + PieceMoves[i][j][1]
-                      ]);
-                      //print("   2: $r , $c");
-
-                      // Check if Piece is Enemy
-                    } else {
-                      // If piece is not a Pawn
-                      if ((SelectedPiece.Type != 0) ||
-                          // OR if Piece IS a pawn AND current move is [-1, 0] or [1, 0]
-
-                          (SelectedPiece.Type == 0 &&
-                              ((PieceMoves[i][j][0] != -1 ||
-                                      PieceMoves[i][j][0] != 1) &&
-                                  PieceMoves[i][j][1] != 0))) {
-                        PossibleMoves.add([
-                          SelectedRow + PieceMoves[i][j][0],
-                          SelectedColumn + PieceMoves[i][j][1]
-                        ]);
-                      }
-                      if (!SelectedPiece.CanJump) {
-                        keepGoing = false;
-                      }
-                      //print("   3: $r , $c");
-                    }
-                  }
-                }
-              }
-            }
-          }
+          PossibleMoves = FindPiecePossibleMoves(SelectedPiece);
 
           // check for other pieces on possiblemoves
           // if opposite color then kill kill kill
@@ -604,6 +431,220 @@ class _MyHomePageState extends State<MyHomePage> {
     SelectedRow = row;
     SelectedColumn = column;
     SelectedPiece = p;
+  }
+
+  // Find Possible Moves for a team
+  List FindDangerZone(List Team) {
+    List dangerZone = [];
+    List possibleMoves = [];
+    for (int i = 0; i < Team.length; i++) {
+      possibleMoves = FindPiecePossibleMoves(Team[i]);
+
+      if (possibleMoves.isNotEmpty) {
+        for (int j = 0; j < possibleMoves.length; j++) {
+          for (int k = 0; k < possibleMoves[j]; k++) {
+            if (!dangerZone.contains(possibleMoves[j][k])) {
+              dangerZone.add(possibleMoves[j][k]);
+            }
+          }
+        }
+      }
+    }
+
+    return dangerZone;
+  }
+
+  // Find the possible moves a piece can do
+  List FindPiecePossibleMoves(Piece p) {
+    List possibleMoves = [];
+    // Get Pieces Moves
+    List PieceMoves = p.CheckMoves();
+
+    // Piece Specific Moves
+    switch (p.Type) {
+      case 0: // Pawn (Kill Move)
+        // White
+        if (p.Team == 0) {
+          // If there is a black piece to diagonally right 1 OR there is an enemy pawn to the right that has EnPassant
+          if ((p.Row - 1 >= 0 &&
+                  p.Column + 1 < 8 &&
+                  !board[p.Row - 1][p.Column + 1].IsEmpty() &&
+                  board[p.Row - 1][p.Column + 1].Team == 1) ||
+              ((p.Column + 1 < 8 &&
+                  board[p.Row][p.Column + 1].Team == 1 &&
+                  board[p.Row][p.Column + 1].Type == 0 &&
+                  board[p.Row][p.Column + 1].EnPassant &&
+                  board[p.Row - 1][p.Column + 1].IsEmpty()))) {
+            PieceMoves.add([
+              [-1, 1]
+            ]); // Move Up Right 1
+            //print("EnPassant Possible");
+          }
+          // (enemy pawn is to right, -1 1 is empty)
+          // If there is a black piece to diagonally left 1 OR there is an enemy pawn to the left that has EnPassant
+          if ((p.Row - 1 >= 0 &&
+                  p.Column - 1 >= 0 &&
+                  !board[p.Row - 1][p.Column - 1].IsEmpty() &&
+                  board[p.Row - 1][p.Column - 1].Team == 1) ||
+              ((p.Column - 1 >= 0 &&
+                  board[p.Row][p.Column - 1].Team == 1 &&
+                  board[p.Row][p.Column - 1].Type == 0 &&
+                  board[p.Row][p.Column - 1].EnPassant &&
+                  board[p.Row - 1][p.Column - 1].IsEmpty()))) {
+            PieceMoves.add([
+              [-1, -1]
+            ]); // Move Up Left 1
+          }
+        } else if (p.Team == 1) {
+          // Black
+          // If there is a white piece to diagonally right OR there is an enemy pawn to the right that has EnPassant
+          if ((p.Row + 1 < 8 &&
+                  p.Column + 1 < 8 &&
+                  !board[p.Row + 1][p.Column + 1].IsEmpty() &&
+                  board[p.Row + 1][p.Column + 1].Team == 0) ||
+              ((p.Column + 1 < 8 &&
+                  board[p.Row][p.Column + 1].Team == 0 &&
+                  board[p.Row][p.Column + 1].Type == 0 &&
+                  board[p.Row][p.Column + 1].EnPassant &&
+                  board[p.Row - 1][p.Column + 1].IsEmpty()))) {
+            PieceMoves.add([
+              [1, 1]
+            ]); // Move Down Right 1
+          }
+
+          // If there is a white piece to diagonally left OR there is an enemy pawn to the left that has EnPassant
+          if ((p.Row + 1 < 8 &&
+                  p.Column - 1 >= 0 &&
+                  !board[p.Row + 1][p.Column - 1].IsEmpty() &&
+                  board[p.Row + 1][p.Column - 1].Team == 0) ||
+              ((p.Column - 1 >= 0 &&
+                  board[p.Row][p.Column - 1].Team == 0 &&
+                  board[p.Row][p.Column - 1].Type == 0 &&
+                  board[p.Row][p.Column - 1].EnPassant &&
+                  board[p.Row - 1][p.Column - 1].IsEmpty()))) {
+            PieceMoves.add([
+              [1, -1]
+            ]); // Move Down Left 1
+          }
+        }
+        break;
+
+      case 5: // King (Castling)
+        if (p.FirstTurn) {
+          if (p.Team == 0) {
+            if (board[7][0].Type == 3 &&
+                board[7][0].FirstTurn &&
+                board[7][1].IsEmpty() &&
+                board[7][2].IsEmpty() &&
+                board[7][3].IsEmpty()) {
+              PieceMoves.add([
+                [0, -2]
+              ]);
+            }
+
+            if (board[7][7].Type == 3 &&
+                board[7][7].FirstTurn &&
+                board[7][5].IsEmpty() &&
+                board[7][6].IsEmpty()) {
+              PieceMoves.add([
+                [0, 2]
+              ]);
+            }
+          } else if (p.Team == 1) {
+            if (board[0][0].Type == 3 &&
+                board[0][0].FirstTurn &&
+                board[0][1].IsEmpty() &&
+                board[0][2].IsEmpty() &&
+                board[0][3].IsEmpty()) {
+              PieceMoves.add([
+                [0, -2]
+              ]);
+            }
+            if (board[0][7].Type == 3 &&
+                board[0][7].FirstTurn &&
+                board[0][5].IsEmpty() &&
+                board[0][6].IsEmpty()) {
+              PieceMoves.add([
+                [0, 2]
+              ]);
+            }
+          }
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    // Get all possible moves
+    bool keepGoing = true;
+
+    //print("SelectedPiece Team: ${SelectedPiece.Team}");
+    //print("SelectedPiece Type: ${SelectedPiece.Type}");
+    //print("------");
+
+    // Find PossibleMoves
+    for (int i = 0; i < PieceMoves.length; i++) {
+      keepGoing = true;
+      for (int j = 0; j < PieceMoves[i].length; j++) {
+        // Make sure PossibleMoves exist on the board
+        if (p.Row + PieceMoves[i][j][0] >= 0 &&
+            p.Row + PieceMoves[i][j][0] <= 7 &&
+            p.Column + PieceMoves[i][j][1] >= 0 &&
+            p.Column + PieceMoves[i][j][1] <= 7) {
+          // If Current Move isn't moving in the same direction as LastMove OR if it's the same
+
+          //print(" Current Move: ${PieceMoves[i][j]}");
+
+          //keepGoing = true;
+          //print("   keepingGoing Condition");
+          //print("  keepGoing: $keepGoing");
+
+          if (keepGoing) {
+            int r = (p.Row + PieceMoves[i][j][0]).toInt();
+            int c = (p.Column + PieceMoves[i][j][1]).toInt();
+            // Check if Piece team is the same as SelectedPiece
+            if (board[r][c].Team == p.Team) {
+              if (!p.CanJump) {
+                keepGoing = false;
+              }
+              //print("   1: $r , $c");
+            } else {
+              // Check if Piece is empty
+              if (board[r][c].IsEmpty()) {
+                possibleMoves.add([
+                  p.Row + PieceMoves[i][j][0],
+                  p.Column + PieceMoves[i][j][1]
+                ]);
+                //print("   2: $r , $c");
+
+                // Check if Piece is Enemy
+              } else {
+                // If piece is not a Pawn
+                if ((p.Type != 0) ||
+                    // OR if Piece IS a pawn AND current move is [-1, 0] or [1, 0]
+
+                    (p.Type == 0 &&
+                        ((PieceMoves[i][j][0] != -1 ||
+                                PieceMoves[i][j][0] != 1) &&
+                            PieceMoves[i][j][1] != 0))) {
+                  possibleMoves.add([
+                    p.Row + PieceMoves[i][j][0],
+                    p.Column + PieceMoves[i][j][1]
+                  ]);
+                }
+                if (!p.CanJump) {
+                  keepGoing = false;
+                }
+                //print("   3: $r , $c");
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return possibleMoves;
   }
 
   // App
@@ -651,7 +692,17 @@ class Piece {
   // is a Possible Position
   bool PossiblePosition = false;
 
-  /// Constructor
+  // Row Position
+  int Row = -1;
+
+  // Column Position
+  int Column = -1;
+
+  // Teams
+  static List WhiteTeam = [];
+  static List BlackTeam = [];
+
+  /// Constructors
   Piece(int ty, int te) {
     Type = ty;
     Team = te;
@@ -663,7 +714,10 @@ class Piece {
 
         ChessPiece = Container(
           color: Team % 2 == 0 ? Colors.white : Colors.black,
-          child: Icon(Icons.perm_identity),
+          child: Icon(
+            Icons.perm_identity,
+            color: Team % 2 == 0 ? Colors.black : Colors.white,
+          ),
         );
         break;
 
@@ -672,7 +726,10 @@ class Piece {
 
         ChessPiece = Container(
           color: Team % 2 == 0 ? Colors.white : Colors.black,
-          child: Icon(Icons.snowshoeing),
+          child: Icon(
+            Icons.snowshoeing,
+            color: Team % 2 == 0 ? Colors.black : Colors.white,
+          ),
         );
 
         CanJump = true;
@@ -683,7 +740,10 @@ class Piece {
 
         ChessPiece = Container(
           color: Team % 2 == 0 ? Colors.white : Colors.black,
-          child: Icon(Icons.skip_next),
+          child: Icon(
+            Icons.skip_next,
+            color: Team % 2 == 0 ? Colors.black : Colors.white,
+          ),
         );
         break;
 
@@ -691,7 +751,10 @@ class Piece {
         Points = 5;
         ChessPiece = Container(
           color: Team % 2 == 0 ? Colors.white : Colors.black,
-          child: Icon(Icons.masks),
+          child: Icon(
+            Icons.masks,
+            color: Team % 2 == 0 ? Colors.black : Colors.white,
+          ),
         );
         break;
 
@@ -699,7 +762,10 @@ class Piece {
         Points = 9;
         ChessPiece = Container(
           color: Team % 2 == 0 ? Colors.white : Colors.black,
-          child: Icon(Icons.female),
+          child: Icon(
+            Icons.female,
+            color: Team % 2 == 0 ? Colors.black : Colors.white,
+          ),
         );
         break;
 
@@ -708,13 +774,25 @@ class Piece {
 
         ChessPiece = Container(
           color: Team % 2 == 0 ? Colors.white : Colors.black,
-          child: Icon(Icons.male),
+          child: Icon(
+            Icons.male,
+            color: Team % 2 == 0 ? Colors.black : Colors.white,
+          ),
         );
         break;
 
       default:
         ChessPiece = Container();
         break;
+    }
+
+    // Add to Team
+    if (Team == 0) {
+      WhiteTeam.add(this);
+      print("White Team Length: ${WhiteTeam.length} ");
+    } else if (Team == 1) {
+      BlackTeam.add(this);
+      print("Black Team Length: ${BlackTeam.length} ");
     }
   }
 
@@ -1085,6 +1163,8 @@ ElevatedButton chessboardSquareWidget(
   int ColumnPosition = col;
   int SquareColor = RowPosition + (ColumnPosition % 2);
   Piece piece = homepage.GetBoard()[row][col];
+  piece.Row = RowPosition;
+  piece.Column = ColumnPosition;
 
   return ElevatedButton(
     onPressed: () {
