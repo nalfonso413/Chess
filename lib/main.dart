@@ -203,6 +203,14 @@ class _MyHomePageState extends State<MyHomePage> {
   // Switch Turn
 
   void ToggleTurn() {
+    if (Turn == 0) {
+      WhiteDangerZones = FindDangerZone(Piece.WhiteTeam);
+      //print("White Danger Zones : ${WhiteDangerZones}");
+    } else {
+      BlackDangerZones = FindDangerZone(Piece.BlackTeam);
+      //print("Black Danger Zones : ${BlackDangerZones}");
+    }
+
     setState(() {
       Turn = Turn == 0 ? 1 : 0;
     });
@@ -437,15 +445,24 @@ class _MyHomePageState extends State<MyHomePage> {
   List FindDangerZone(List Team) {
     List dangerZone = [];
     List possibleMoves = [];
+    bool contains = false;
     for (int i = 0; i < Team.length; i++) {
-      possibleMoves = FindPiecePossibleMoves(Team[i]);
+      possibleMoves = FindPieceKillMoves(Team[i]);
 
       if (possibleMoves.isNotEmpty) {
         for (int j = 0; j < possibleMoves.length; j++) {
-          for (int k = 0; k < possibleMoves[j]; k++) {
-            if (!dangerZone.contains(possibleMoves[j][k])) {
-              dangerZone.add(possibleMoves[j][k]);
+          for (int k = 0; k < dangerZone.length; k++) {
+            if (dangerZone[k][0] == possibleMoves[j][0] &&
+                dangerZone[k][1] == possibleMoves[j][1]) {
+              contains = true;
+              break;
             }
+          }
+
+          if (!contains) {
+            dangerZone.add(possibleMoves[j]);
+          } else {
+            contains = false;
           }
         }
       }
@@ -526,6 +543,181 @@ class _MyHomePageState extends State<MyHomePage> {
               [1, -1]
             ]); // Move Down Left 1
           }
+        }
+        break;
+
+      case 5: // King (Castling)
+        if (p.FirstTurn) {
+          if (p.Team == 0) {
+            if (board[7][0].Type == 3 &&
+                board[7][0].FirstTurn &&
+                board[7][1].IsEmpty() &&
+                board[7][2].IsEmpty() &&
+                board[7][3].IsEmpty()) {
+              PieceMoves.add([
+                [0, -2]
+              ]);
+            }
+
+            if (board[7][7].Type == 3 &&
+                board[7][7].FirstTurn &&
+                board[7][5].IsEmpty() &&
+                board[7][6].IsEmpty()) {
+              PieceMoves.add([
+                [0, 2]
+              ]);
+            }
+          } else if (p.Team == 1) {
+            if (board[0][0].Type == 3 &&
+                board[0][0].FirstTurn &&
+                board[0][1].IsEmpty() &&
+                board[0][2].IsEmpty() &&
+                board[0][3].IsEmpty()) {
+              PieceMoves.add([
+                [0, -2]
+              ]);
+            }
+            if (board[0][7].Type == 3 &&
+                board[0][7].FirstTurn &&
+                board[0][5].IsEmpty() &&
+                board[0][6].IsEmpty()) {
+              PieceMoves.add([
+                [0, 2]
+              ]);
+            }
+          }
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    // Get all possible moves
+    bool keepGoing = true;
+
+    //print("SelectedPiece Team: ${SelectedPiece.Team}");
+    //print("SelectedPiece Type: ${SelectedPiece.Type}");
+    //print("------");
+
+    // Find PossibleMoves
+    for (int i = 0; i < PieceMoves.length; i++) {
+      keepGoing = true;
+      for (int j = 0; j < PieceMoves[i].length; j++) {
+        // Make sure PossibleMoves exist on the board
+        if (p.Row + PieceMoves[i][j][0] >= 0 &&
+            p.Row + PieceMoves[i][j][0] <= 7 &&
+            p.Column + PieceMoves[i][j][1] >= 0 &&
+            p.Column + PieceMoves[i][j][1] <= 7) {
+          // If Current Move isn't moving in the same direction as LastMove OR if it's the same
+
+          //print(" Current Move: ${PieceMoves[i][j]}");
+
+          //keepGoing = true;
+          //print("   keepingGoing Condition");
+          //print("  keepGoing: $keepGoing");
+
+          if (keepGoing) {
+            int r = (p.Row + PieceMoves[i][j][0]).toInt();
+            int c = (p.Column + PieceMoves[i][j][1]).toInt();
+            // Check if Piece team is the same as SelectedPiece
+            if (board[r][c].Team == p.Team) {
+              if (!p.CanJump) {
+                keepGoing = false;
+              }
+              //print("   1: $r , $c");
+            } else {
+              // Check if Piece is empty
+              if (board[r][c].IsEmpty()) {
+                possibleMoves.add([
+                  p.Row + PieceMoves[i][j][0],
+                  p.Column + PieceMoves[i][j][1]
+                ]);
+                //print("   2: $r , $c");
+
+                // Check if Piece is Enemy
+              } else {
+                // If piece is not a Pawn
+                if ((p.Type != 0) ||
+                    // OR if Piece IS a pawn AND current move is [-1, 0] or [1, 0]
+
+                    (p.Type == 0 &&
+                        ((PieceMoves[i][j][0] != -1 ||
+                                PieceMoves[i][j][0] != 1) &&
+                            PieceMoves[i][j][1] != 0))) {
+                  possibleMoves.add([
+                    p.Row + PieceMoves[i][j][0],
+                    p.Column + PieceMoves[i][j][1]
+                  ]);
+                }
+                if (!p.CanJump) {
+                  keepGoing = false;
+                }
+                //print("   3: $r , $c");
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (p.Type == 5) {
+      print("Possible Moves: ${possibleMoves}");
+      List dangerZone = [];
+
+      if (Turn == 0) {
+        dangerZone = BlackDangerZones;
+      } else {
+        dangerZone = WhiteDangerZones;
+      }
+
+      List remove = [];
+      for (int i = 0; i < dangerZone.length; i++) {
+        for (int j = 0; j < possibleMoves.length; j++) {
+          if (dangerZone[i][0] == possibleMoves[j][0] &&
+              dangerZone[i][1] == possibleMoves[j][1]) {
+            remove.add(possibleMoves[j]);
+          }
+
+          //print("Danger Zone: ${dangerZone[i]}");
+          //print("Possible Moves: ${possibleMoves[j]}");
+        }
+      }
+
+      for (int i = 0; i < remove.length; i++) {
+        possibleMoves.remove(remove[i]);
+      }
+    }
+
+    return possibleMoves;
+  }
+
+  List FindPieceKillMoves(Piece p) {
+    List possibleMoves = [];
+    // Get Pieces Moves
+    List PieceMoves = p.CheckMoves();
+
+    // Piece Specific Moves
+    switch (p.Type) {
+      case 0: // Pawn (Kill Moves)
+        // White
+        PieceMoves.clear();
+        if (p.Team == 0) {
+          PieceMoves.add([
+            [-1, 1]
+          ]);
+          PieceMoves.add([
+            [-1, -1]
+          ]);
+        } else if (p.Team == 1) {
+          // Black
+          PieceMoves.add([
+            [1, 1]
+          ]);
+
+          PieceMoves.add([
+            [1, -1]
+          ]);
         }
         break;
 
@@ -789,10 +981,10 @@ class Piece {
     // Add to Team
     if (Team == 0) {
       WhiteTeam.add(this);
-      print("White Team Length: ${WhiteTeam.length} ");
+      //print("White Team Length: ${WhiteTeam.length} ");
     } else if (Team == 1) {
       BlackTeam.add(this);
-      print("Black Team Length: ${BlackTeam.length} ");
+      //print("Black Team Length: ${BlackTeam.length} ");
     }
   }
 
