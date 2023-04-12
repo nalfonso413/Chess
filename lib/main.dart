@@ -163,6 +163,9 @@ class _MyHomePageState extends State<MyHomePage> {
   // Player in Check?
   bool InCheck = false;
 
+  // Player in Checkmate?
+  bool InCheckmate = false;
+
   /// Constructor
   void Intialize() {
     // Set up Board
@@ -199,12 +202,17 @@ class _MyHomePageState extends State<MyHomePage> {
       CanPromote = b;
     });
   }
-  // Check for king check
 
-  // Check for win
+  // Sets Selected Piece, Column, and Row
+  void SetSelectedPiece(int row, int column, Piece p) {
+    SelectedRow = row;
+    SelectedColumn = column;
+    SelectedPiece = p;
+  }
+
+  /// Functions
 
   // Switch Turn
-
   void ToggleTurn() {
     // Get Danger Zones
     if (Turn == 0) {
@@ -228,13 +236,17 @@ class _MyHomePageState extends State<MyHomePage> {
       }
 
       // Check for Check
-      WhiteDangerZones.forEach((element) {
-        if (element[0] == Piece.BlackKing.Row &&
-            element[1] == Piece.BlackKing.Column) {
+      for (int i = 0; i < WhiteDangerZones.length; i++) {
+        if (WhiteDangerZones[i][0] == Piece.BlackKing.Row &&
+            WhiteDangerZones[i][1] == Piece.BlackKing.Column) {
           InCheck = true;
-          print("ebebe");
+          print("Black in Check");
+          break;
+        } else {
+          InCheck = false;
+          print("Black not in Check");
         }
-      });
+      }
     } else {
       // Remove EnPassants if applicable
       if (EnPassantWhitePawn.length > 0) {
@@ -243,16 +255,18 @@ class _MyHomePageState extends State<MyHomePage> {
       }
 
       // Check for Check
-      BlackDangerZones.forEach((element) {
-        if (element[0] == Piece.WhiteKing.Row &&
-            element[1] == Piece.WhiteKing.Column) {
+      for (int i = 0; i < BlackDangerZones.length; i++) {
+        if (BlackDangerZones[i][0] == Piece.WhiteKing.Row &&
+            BlackDangerZones[i][1] == Piece.WhiteKing.Column) {
           InCheck = true;
-          print("ebebe");
+          print("White in Check");
+          break;
+        } else {
+          InCheck = false;
+          print("White not in Check");
         }
-      });
+      }
     }
-
-    // Check if King is in Check
   }
 
   // Selected
@@ -282,7 +296,7 @@ class _MyHomePageState extends State<MyHomePage> {
         });
       }
 
-      // Check if button position was a possible position
+      // Selected a Position for SelectedPiece
       if (CheckPossiblePositions(row, col)) {
         // Toggle Possible Positions
         TogglePossiblePositions();
@@ -404,6 +418,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ToggleTurn();
         }
       } else {
+        // Selected a Piece
         // Toggle Possible Positions
         TogglePossiblePositions();
 
@@ -412,9 +427,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
         // Get Selection Variables
         if (!CanPromote) {
-          SelectedRow = row;
-          SelectedColumn = col;
-          SelectedPiece = board[SelectedRow][SelectedColumn];
+          if (!InCheck || (InCheck && board[row][col].Type == 5)) {
+            SelectedRow = row;
+            SelectedColumn = col;
+            SelectedPiece = board[SelectedRow][SelectedColumn];
+          }
         }
 
         if (SelectedRow != -1 &&
@@ -426,15 +443,11 @@ class _MyHomePageState extends State<MyHomePage> {
             SelectedPiece.Selected = true;
           });
 
+          // Find Pieces Possible Moves
           PossibleMoves = FindPiecePossibleMoves(SelectedPiece);
 
-          // check for other pieces on possiblemoves
-          // if opposite color then kill kill kill
-
-          // Compare PossibleMoves to board
+          // Toggle Possible Positions
           TogglePossiblePositions();
-
-          // change color of appropriate widgets
         }
       }
     }
@@ -465,13 +478,6 @@ class _MyHomePageState extends State<MyHomePage> {
     return false;
   }
 
-  // Sets Selected Piece, Column, and Row
-  void SetSelectedPiece(int row, int column, Piece p) {
-    SelectedRow = row;
-    SelectedColumn = column;
-    SelectedPiece = p;
-  }
-
   // Find Possible Moves for a team
   List FindDangerZone(List Team) {
     List dangerZone = [];
@@ -498,7 +504,6 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       }
     }
-
     return dangerZone;
   }
 
@@ -827,36 +832,35 @@ class _MyHomePageState extends State<MyHomePage> {
             int r = (p.Row + PieceMoves[i][j][0]).toInt();
             int c = (p.Column + PieceMoves[i][j][1]).toInt();
             // Check if Piece team is the same as SelectedPiece
-            if (board[r][c].Team == p.Team) {
-              if (!p.CanJump) {
-                keepGoing = false;
-              }
-              //print("   1: $r , $c");
+
+            // Check if Piece is empty
+            if (board[r][c].IsEmpty()) {
+              possibleMoves.add([
+                p.Row + PieceMoves[i][j][0],
+                p.Column + PieceMoves[i][j][1]
+              ]);
+              //print("   2: $r , $c");
+
+              // Check if Piece is Enemy
             } else {
-              // Check if Piece is empty
-              if (board[r][c].IsEmpty()) {
+              // If piece is not a Pawn
+              if ((p.Type != 0) ||
+                  // OR if Piece IS a pawn AND current move is [-1, 0] or [1, 0]
+
+                  (p.Type == 0 &&
+                      ((PieceMoves[i][j][0] != -1 ||
+                              PieceMoves[i][j][0] != 1) &&
+                          PieceMoves[i][j][1] != 0))) {
                 possibleMoves.add([
                   p.Row + PieceMoves[i][j][0],
                   p.Column + PieceMoves[i][j][1]
                 ]);
-                //print("   2: $r , $c");
 
-                // Check if Piece is Enemy
-              } else {
-                // If piece is not a Pawn
-                if ((p.Type != 0) ||
-                    // OR if Piece IS a pawn AND current move is [-1, 0] or [1, 0]
-
-                    (p.Type == 0 &&
-                        ((PieceMoves[i][j][0] != -1 ||
-                                PieceMoves[i][j][0] != 1) &&
-                            PieceMoves[i][j][1] != 0))) {
-                  possibleMoves.add([
-                    p.Row + PieceMoves[i][j][0],
-                    p.Column + PieceMoves[i][j][1]
-                  ]);
-                }
-                if (!p.CanJump) {
+                if (!p.CanJump &&
+                    board[(p.Row + PieceMoves[i][j][0]).toInt()]
+                                [(p.Column + PieceMoves[i][j][1]).toInt()]
+                            .Type !=
+                        5) {
                   keepGoing = false;
                 }
                 //print("   3: $r , $c");
