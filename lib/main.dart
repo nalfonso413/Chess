@@ -160,6 +160,9 @@ class _MyHomePageState extends State<MyHomePage> {
   List WhiteDangerZones = [];
   List BlackDangerZones = [];
 
+  // Player in Check?
+  bool InCheck = false;
+
   /// Constructor
   void Intialize() {
     // Set up Board
@@ -203,29 +206,53 @@ class _MyHomePageState extends State<MyHomePage> {
   // Switch Turn
 
   void ToggleTurn() {
+    // Get Danger Zones
     if (Turn == 0) {
       WhiteDangerZones = FindDangerZone(Piece.WhiteTeam);
-      //print("White Danger Zones : ${WhiteDangerZones}");
+      print("White Danger Zones : ${WhiteDangerZones}");
     } else {
       BlackDangerZones = FindDangerZone(Piece.BlackTeam);
-      //print("Black Danger Zones : ${BlackDangerZones}");
+      print("Black Danger Zones : ${BlackDangerZones}");
     }
 
+    // Switch Turn
     setState(() {
       Turn = Turn == 0 ? 1 : 0;
     });
 
     if (Turn == 1) {
+      // Remove EnPassants if applicable
       if (EnPassantBlackPawn.length > 0) {
         EnPassantBlackPawn[0].EnPassant = false;
         EnPassantBlackPawn.removeAt(0);
       }
+
+      // Check for Check
+      WhiteDangerZones.forEach((element) {
+        if (element[0] == Piece.BlackKing.Row &&
+            element[1] == Piece.BlackKing.Column) {
+          InCheck = true;
+          print("ebebe");
+        }
+      });
     } else {
+      // Remove EnPassants if applicable
       if (EnPassantWhitePawn.length > 0) {
         EnPassantWhitePawn[0].EnPassant = false;
         EnPassantWhitePawn.removeAt(0);
       }
+
+      // Check for Check
+      BlackDangerZones.forEach((element) {
+        if (element[0] == Piece.WhiteKing.Row &&
+            element[1] == Piece.WhiteKing.Column) {
+          InCheck = true;
+          print("ebebe");
+        }
+      });
     }
+
+    // Check if King is in Check
   }
 
   // Selected
@@ -280,6 +307,10 @@ class _MyHomePageState extends State<MyHomePage> {
         }
         // Move Piece
         board[row][col] = SelectedPiece;
+
+        // Set Piece's Locations
+        SelectedPiece.Row = row;
+        SelectedPiece.Column = col;
 
         // Do Piece Specific things
         switch (SelectedPiece.Type) {
@@ -894,6 +925,10 @@ class Piece {
   static List WhiteTeam = [];
   static List BlackTeam = [];
 
+  // Player Kings
+  static Piece WhiteKing = Piece(-1, -1);
+  static Piece BlackKing = Piece(-1, -1);
+
   /// Constructors
   Piece(int ty, int te) {
     Type = ty;
@@ -971,6 +1006,13 @@ class Piece {
             color: Team % 2 == 0 ? Colors.black : Colors.white,
           ),
         );
+
+        if (Team == 0) {
+          WhiteKing = this;
+        } else if (Team == 1) {
+          BlackKing = this;
+        }
+
         break;
 
       default:
