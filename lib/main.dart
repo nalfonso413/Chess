@@ -196,7 +196,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   /// Setters
 
-  // Promote
+  // Sets CanPromote
   void SetCanPromote(bool b) {
     setState(() {
       CanPromote = b;
@@ -210,6 +210,13 @@ class _MyHomePageState extends State<MyHomePage> {
     SelectedPiece = p;
   }
 
+  // Sets InCheck
+  void SetInCheck(bool b) {
+    setState(() {
+      InCheck = b;
+    });
+  }
+
   /// Functions
 
   // Switch Turn
@@ -217,10 +224,10 @@ class _MyHomePageState extends State<MyHomePage> {
     // Get Danger Zones
     if (Turn == 0) {
       WhiteDangerZones = FindDangerZone(Piece.WhiteTeam);
-      print("White Danger Zones : ${WhiteDangerZones}");
+      //print("White Danger Zones : ${WhiteDangerZones}");
     } else {
       BlackDangerZones = FindDangerZone(Piece.BlackTeam);
-      print("Black Danger Zones : ${BlackDangerZones}");
+      //print("Black Danger Zones : ${BlackDangerZones}");
     }
 
     // Switch Turn
@@ -228,45 +235,42 @@ class _MyHomePageState extends State<MyHomePage> {
       Turn = Turn == 0 ? 1 : 0;
     });
 
+    // Post Turn Toggle Check
     if (Turn == 1) {
       // Remove EnPassants if applicable
       if (EnPassantBlackPawn.length > 0) {
-        EnPassantBlackPawn[0].EnPassant = false;
-        EnPassantBlackPawn.removeAt(0);
+        RemoveEnPassant(EnPassantBlackPawn);
       }
 
-      // Check for Check
-      for (int i = 0; i < WhiteDangerZones.length; i++) {
-        if (WhiteDangerZones[i][0] == Piece.BlackKing.Row &&
-            WhiteDangerZones[i][1] == Piece.BlackKing.Column) {
-          InCheck = true;
-          print("Black in Check");
-          break;
-        } else {
-          InCheck = false;
-          print("Black not in Check");
-        }
-      }
+      // Check if player is in Check
+      FindIfPlayerInCheck(WhiteDangerZones, Piece.BlackKing);
     } else {
       // Remove EnPassants if applicable
       if (EnPassantWhitePawn.length > 0) {
-        EnPassantWhitePawn[0].EnPassant = false;
-        EnPassantWhitePawn.removeAt(0);
+        RemoveEnPassant(EnPassantWhitePawn);
       }
 
-      // Check for Check
-      for (int i = 0; i < BlackDangerZones.length; i++) {
-        if (BlackDangerZones[i][0] == Piece.WhiteKing.Row &&
-            BlackDangerZones[i][1] == Piece.WhiteKing.Column) {
-          InCheck = true;
-          print("White in Check");
-          break;
-        } else {
-          InCheck = false;
-          print("White not in Check");
-        }
+      // Check if player is in Check
+      FindIfPlayerInCheck(BlackDangerZones, Piece.WhiteKing);
+    }
+  }
+
+  // Find if a player is in check
+  void FindIfPlayerInCheck(List l, Piece king) {
+    for (int i = 0; i < l.length; i++) {
+      if (l[i][0] == king.Row && l[i][1] == king.Column) {
+        SetInCheck(true);
+        break;
+      } else {
+        SetInCheck(false);
       }
     }
+  }
+
+  // Remove EnPassants
+  void RemoveEnPassant(List l) {
+    l[0].EnPassant = false;
+    l.removeAt(0);
   }
 
   // Selected
@@ -583,7 +587,7 @@ class _MyHomePageState extends State<MyHomePage> {
         break;
 
       case 5: // King (Castling)
-        if (p.FirstTurn) {
+        if (p.FirstTurn && !InCheck) {
           if (p.Team == 0) {
             if (board[7][0].Type == 3 &&
                 board[7][0].FirstTurn &&
@@ -697,8 +701,9 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     }
 
+    // Prevent King from making moves that will place them in Check
     if (p.Type == 5) {
-      print("Possible Moves: ${possibleMoves}");
+      //print("Possible Moves: ${possibleMoves}");
       List dangerZone = [];
 
       if (Turn == 0) {
@@ -724,10 +729,58 @@ class _MyHomePageState extends State<MyHomePage> {
         possibleMoves.remove(remove[i]);
       }
     }
+    // Prevent pieces from making moves that will place the King in Check
+    else if (p.Type != -1) {
+      List remove = [];
+      List team = [];
+      List dangerZone = [];
+
+      if (Turn == 0) {
+        team = Piece.BlackTeam;
+      } else {
+        team = Piece.WhiteTeam;
+      }
+
+      Piece king = Turn == 0 ? Piece.WhiteKing : Piece.BlackKing;
+
+      List boardClone = List.from(board);
+      int originalRow = SelectedPiece.Row;
+      int originalColumn = SelectedPiece.Column;
+
+      board[SelectedPiece.Row][SelectedPiece.Column] = Piece(-1, -1);
+      possibleMoves.forEach((element) {
+        /*
+        // give killpossiblemoves function a list board to work with
+        SelectedPiece.Row = element[0];
+        SelectedPiece.Column = element[1];
+        board[SelectedPiece.Row][SelectedPiece.Column] = SelectedPiece;
+        dangerZone = FindDangerZone(team);
+        */
+
+        dangerZone.forEach((dangerZoneElement) {
+          if (dangerZoneElement[0] == king.Row &&
+              dangerZoneElement[1] == king.Column) {
+            remove.add([dangerZoneElement[0], dangerZoneElement[1]]);
+          }
+        });
+        board = List.from(boardClone);
+      });
+
+      // Remove Danger Zones
+      for (int i = 0; i < remove.length; i++) {
+        possibleMoves.remove(remove[i]);
+        print("Removed: ${remove[i]}");
+      }
+
+      SelectedPiece.Row = originalRow;
+      SelectedPiece.Column = originalColumn;
+      board = List.from(boardClone);
+    }
 
     return possibleMoves;
   }
 
+  // Find all possible ways a piece can kill another piece
   List FindPieceKillMoves(Piece p) {
     List possibleMoves = [];
     // Get Pieces Moves
@@ -758,7 +811,7 @@ class _MyHomePageState extends State<MyHomePage> {
         break;
 
       case 5: // King (Castling)
-        if (p.FirstTurn) {
+        if (p.FirstTurn && !InCheck) {
           if (p.Team == 0) {
             if (board[7][0].Type == 3 &&
                 board[7][0].FirstTurn &&
