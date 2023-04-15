@@ -223,10 +223,10 @@ class _MyHomePageState extends State<MyHomePage> {
   void ToggleTurn() {
     // Get Danger Zones
     if (Turn == 0) {
-      WhiteDangerZones = FindDangerZone(Piece.WhiteTeam);
+      WhiteDangerZones = FindDangerZone(Piece.WhiteTeam, board);
       //print("White Danger Zones : ${WhiteDangerZones}");
     } else {
-      BlackDangerZones = FindDangerZone(Piece.BlackTeam);
+      BlackDangerZones = FindDangerZone(Piece.BlackTeam, board);
       //print("Black Danger Zones : ${BlackDangerZones}");
     }
 
@@ -483,16 +483,17 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   // Find Possible Moves for a team
-  List FindDangerZone(List Team) {
+  List FindDangerZone(List Team, List chessboard) {
     List dangerZone = [];
     List possibleMoves = [];
     bool contains = false;
     for (int i = 0; i < Team.length; i++) {
-      possibleMoves = FindPieceKillMoves(Team[i]);
+      possibleMoves = FindPieceKillMoves(Team[i], chessboard);
 
       if (possibleMoves.isNotEmpty) {
         for (int j = 0; j < possibleMoves.length; j++) {
           for (int k = 0; k < dangerZone.length; k++) {
+            // Check for duplicates
             if (dangerZone[k][0] == possibleMoves[j][0] &&
                 dangerZone[k][1] == possibleMoves[j][1]) {
               contains = true;
@@ -500,6 +501,7 @@ class _MyHomePageState extends State<MyHomePage> {
             }
           }
 
+          // Avoid Adding Duplicates
           if (!contains) {
             dangerZone.add(possibleMoves[j]);
           } else {
@@ -732,38 +734,173 @@ class _MyHomePageState extends State<MyHomePage> {
     // Prevent pieces from making moves that will place the King in Check
     else if (p.Type != -1) {
       List remove = [];
+      List dangerZone = [];
+      List team = [];
+      Piece king = Turn == 0 ? Piece.WhiteKing : Piece.BlackKing;
+
+      team = Turn == 0 ? Piece.BlackTeam : Piece.WhiteTeam;
+
+      possibleMoves.forEach((possibleMovesElement) {
+        board[SelectedPiece.Row][SelectedPiece.Column] = Piece(-1, -1);
+        SelectedPiece.Row = possibleMovesElement[0];
+        SelectedPiece.Column = possibleMovesElement[1];
+        board[SelectedPiece.Row][SelectedPiece.Column] = SelectedPiece;
+        dangerZone = FindDangerZone(team, board);
+        print(dangerZone);
+        print("---");
+
+        dangerZone.forEach((dangerZoneElement) {
+          if ((dangerZoneElement[0] == king.Row) &&
+              (dangerZoneElement[1] == king.Column)) {
+            remove.add(possibleMovesElement);
+            //print(dangerZoneElement);
+          }
+        });
+
+        // Reset board
+        for (int i = 0; i < board.length; i++) {
+          for (int j = 0; j < board[i].length; j++) {
+            board[i][j] = Piece(-1, -1);
+          }
+        }
+
+        // Place White Team
+        for (int i = 0; i < Piece.WhiteTeam.length; i++) {
+          board[Piece.WhiteTeam[i].Row][Piece.WhiteTeam[i].Column] =
+              Piece.WhiteTeam[i];
+        }
+
+        // Place Black Team
+        for (int i = 0; i < Piece.BlackTeam.length; i++) {
+          board[Piece.BlackTeam[i].Row][Piece.BlackTeam[i].Column] =
+              Piece.BlackTeam[i];
+        }
+      });
+
+      SelectedPiece.Row = SelectedRow;
+      SelectedPiece.Column = SelectedColumn;
+
+      // Reset board
+      for (int i = 0; i < board.length; i++) {
+        for (int j = 0; j < board[i].length; j++) {
+          board[i][j] = Piece(-1, -1);
+        }
+      }
+
+      // Place White Team
+      for (int i = 0; i < Piece.WhiteTeam.length; i++) {
+        board[Piece.WhiteTeam[i].Row][Piece.WhiteTeam[i].Column] =
+            Piece.WhiteTeam[i];
+      }
+
+      // Place Black Team
+      for (int i = 0; i < Piece.BlackTeam.length; i++) {
+        board[Piece.BlackTeam[i].Row][Piece.BlackTeam[i].Column] =
+            Piece.BlackTeam[i];
+      }
+
+      // Remove Danger Zones
+      for (int i = 0; i < remove.length; i++) {
+        possibleMoves.remove(remove[i]);
+        print("Removed: ${remove[i]}");
+      }
+      /*
+      List remove = [];
       List team = [];
       List dangerZone = [];
 
-      if (Turn == 0) {
-        team = Piece.BlackTeam;
-      } else {
-        team = Piece.WhiteTeam;
+      // Get Appropriate King
+      Piece king = Piece(-1, -1);
+
+      // Create clone
+      List boardClone = [
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+      ];
+
+      // Clone board
+      for (int i = 0; i < board.length; i++) {
+        for (int j = 0; j < board[i].length; j++) {
+          boardClone[i].add(Piece(board[i][j].Type, board[i][j].Team));
+          Piece.WhiteTeam.remove(boardClone[i][j]);
+          Piece.BlackTeam.remove(boardClone[i][j]);
+          // add pieces to proper team
+          if ((Turn == 0 && boardClone[i][j].Team == 1) ||
+              (Turn == 1 && boardClone[i][j].Team == 0)) {
+            //print("Piece Team: ${board[i][j].Team}");
+
+            if (boardClone[i][j].Type == 5) {
+              king = boardClone[i][j];
+            }
+            team.add(boardClone[i][j]);
+          }
+        }
       }
 
-      Piece king = Turn == 0 ? Piece.WhiteKing : Piece.BlackKing;
+      for (int i = 0; i < boardClone.length; i++) {
+        print("Row $i");
+        for (int j = 0; j < boardClone[i].length; j++) {
+          print(
+              "Col: ${j} Team: ${boardClone[i][j].Team} Type: ${boardClone[i][j].Type}");
+        }
+      }
 
-      List boardClone = List.from(board);
-      int originalRow = SelectedPiece.Row;
-      int originalColumn = SelectedPiece.Column;
+      //print("Team Length: ${team.length}");
 
-      board[SelectedPiece.Row][SelectedPiece.Column] = Piece(-1, -1);
+      // Get Copy of SelectedPiece
+      Piece copyPiece = boardClone[SelectedPiece.Row][SelectedPiece.Column];
+
+      // Check possibleMoves' results
       possibleMoves.forEach((element) {
-        /*
         // give killpossiblemoves function a list board to work with
-        SelectedPiece.Row = element[0];
-        SelectedPiece.Column = element[1];
-        board[SelectedPiece.Row][SelectedPiece.Column] = SelectedPiece;
-        dangerZone = FindDangerZone(team);
-        */
+        boardClone[copyPiece.Row][copyPiece.Column] =
+        copyPiece.Row = element[0];
+        copyPiece.Column = element[1];
+        boardClone[copyPiece.Row][copyPiece.Column] = copyPiece;
+        dangerZone = FindDangerZone(team, boardClone);
 
+        // Check if any dangerzone is equal to the king's
         dangerZone.forEach((dangerZoneElement) {
+          //print("Danger Zone Element: ${dangerZoneElement}");
           if (dangerZoneElement[0] == king.Row &&
               dangerZoneElement[1] == king.Column) {
             remove.add([dangerZoneElement[0], dangerZoneElement[1]]);
           }
         });
-        board = List.from(boardClone);
+
+        //print("Remove Length: ${remove.length}");
+
+        // Reset boardClone
+        for (int i = 0; i < boardClone.length; i++) {
+          boardClone[i].clear();
+        }
+
+        team.clear();
+
+        // Clone board
+        for (int i = 0; i < board.length; i++) {
+          for (int j = 0; j < board[i].length; j++) {
+            boardClone[i].add(Piece(board[i][j].Type, board[i][j].Team));
+            Piece.WhiteTeam.remove(boardClone[i][j]);
+            Piece.BlackTeam.remove(boardClone[i][j]);
+            // add pieces to proper team
+            if ((Turn == 0 && boardClone[i][j].Team == 1) ||
+                (Turn == 1 && boardClone[i][j].Team == 0)) {
+              //print("Piece Team: ${board[i][j].Team}");
+
+              if (boardClone[i][j].Type == 5) {
+                king = boardClone[i][j];
+              }
+              team.add(boardClone[i][j]);
+            }
+          }
+        }
       });
 
       // Remove Danger Zones
@@ -772,16 +909,27 @@ class _MyHomePageState extends State<MyHomePage> {
         print("Removed: ${remove[i]}");
       }
 
-      SelectedPiece.Row = originalRow;
-      SelectedPiece.Column = originalColumn;
-      board = List.from(boardClone);
+      board[SelectedPiece.Row][SelectedPiece.Column] = SelectedPiece;
+      */
     }
 
     return possibleMoves;
+
+    // Check each possiblemove of a piece
+    // using a cloned board to check the dangerzones of each possiblemove
+
+    // problems of cloning a board
+    // the clone will just be a reference
+    // the clone will have to add new pieces that adds to the Piece class's total static order
+    // it needs to be reset at the beginning of each iteration, so this process will occur for each possiblemove UnU,,,
+    // if i use the original board as a simulator, then SelectedPiece will be a different piece
+
+    // if a possiblemove would result in a king getting check'd, add it to the remove list
+    // after its all done, remove all items from the remove list that are in the possiblemoves list
   }
 
   // Find all possible ways a piece can kill another piece
-  List FindPieceKillMoves(Piece p) {
+  List FindPieceKillMoves(Piece p, List chessboard) {
     List possibleMoves = [];
     // Get Pieces Moves
     List PieceMoves = p.CheckMoves();
@@ -813,38 +961,38 @@ class _MyHomePageState extends State<MyHomePage> {
       case 5: // King (Castling)
         if (p.FirstTurn && !InCheck) {
           if (p.Team == 0) {
-            if (board[7][0].Type == 3 &&
-                board[7][0].FirstTurn &&
-                board[7][1].IsEmpty() &&
-                board[7][2].IsEmpty() &&
-                board[7][3].IsEmpty()) {
+            if (chessboard[7][0].Type == 3 &&
+                chessboard[7][0].FirstTurn &&
+                chessboard[7][1].IsEmpty() &&
+                chessboard[7][2].IsEmpty() &&
+                chessboard[7][3].IsEmpty()) {
               PieceMoves.add([
                 [0, -2]
               ]);
             }
 
-            if (board[7][7].Type == 3 &&
-                board[7][7].FirstTurn &&
-                board[7][5].IsEmpty() &&
-                board[7][6].IsEmpty()) {
+            if (chessboard[7][7].Type == 3 &&
+                chessboard[7][7].FirstTurn &&
+                chessboard[7][5].IsEmpty() &&
+                chessboard[7][6].IsEmpty()) {
               PieceMoves.add([
                 [0, 2]
               ]);
             }
           } else if (p.Team == 1) {
-            if (board[0][0].Type == 3 &&
-                board[0][0].FirstTurn &&
-                board[0][1].IsEmpty() &&
-                board[0][2].IsEmpty() &&
-                board[0][3].IsEmpty()) {
+            if (chessboard[0][0].Type == 3 &&
+                chessboard[0][0].FirstTurn &&
+                chessboard[0][1].IsEmpty() &&
+                chessboard[0][2].IsEmpty() &&
+                chessboard[0][3].IsEmpty()) {
               PieceMoves.add([
                 [0, -2]
               ]);
             }
-            if (board[0][7].Type == 3 &&
-                board[0][7].FirstTurn &&
-                board[0][5].IsEmpty() &&
-                board[0][6].IsEmpty()) {
+            if (chessboard[0][7].Type == 3 &&
+                chessboard[0][7].FirstTurn &&
+                chessboard[0][5].IsEmpty() &&
+                chessboard[0][6].IsEmpty()) {
               PieceMoves.add([
                 [0, 2]
               ]);
@@ -887,7 +1035,7 @@ class _MyHomePageState extends State<MyHomePage> {
             // Check if Piece team is the same as SelectedPiece
 
             // Check if Piece is empty
-            if (board[r][c].IsEmpty()) {
+            if (chessboard[r][c].IsEmpty()) {
               possibleMoves.add([
                 p.Row + PieceMoves[i][j][0],
                 p.Column + PieceMoves[i][j][1]
@@ -910,7 +1058,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ]);
 
                 if (!p.CanJump &&
-                    board[(p.Row + PieceMoves[i][j][0]).toInt()]
+                    chessboard[(p.Row + PieceMoves[i][j][0]).toInt()]
                                 [(p.Column + PieceMoves[i][j][1]).toInt()]
                             .Type !=
                         5) {
