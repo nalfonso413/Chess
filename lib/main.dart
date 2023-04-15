@@ -737,17 +737,21 @@ class _MyHomePageState extends State<MyHomePage> {
       List dangerZone = [];
       List team = [];
       Piece king = Turn == 0 ? Piece.WhiteKing : Piece.BlackKing;
-
+      Piece possibleKill = Piece(-1, -1);
       team = Turn == 0 ? Piece.BlackTeam : Piece.WhiteTeam;
 
       possibleMoves.forEach((possibleMovesElement) {
         board[SelectedPiece.Row][SelectedPiece.Column] = Piece(-1, -1);
         SelectedPiece.Row = possibleMovesElement[0];
         SelectedPiece.Column = possibleMovesElement[1];
+        if (!board[SelectedPiece.Row][SelectedPiece.Column].IsEmpty()) {
+          possibleKill = board[SelectedPiece.Row][SelectedPiece.Column];
+          team.remove(possibleKill);
+        }
         board[SelectedPiece.Row][SelectedPiece.Column] = SelectedPiece;
         dangerZone = FindDangerZone(team, board);
-        print(dangerZone);
-        print("---");
+        // print(dangerZone);
+        // print("---");
 
         dangerZone.forEach((dangerZoneElement) {
           if ((dangerZoneElement[0] == king.Row) &&
@@ -774,6 +778,12 @@ class _MyHomePageState extends State<MyHomePage> {
         for (int i = 0; i < Piece.BlackTeam.length; i++) {
           board[Piece.BlackTeam[i].Row][Piece.BlackTeam[i].Column] =
               Piece.BlackTeam[i];
+        }
+
+        // Readd possibleKill
+        if (!possibleKill.IsEmpty()) {
+          team.add(possibleKill);
+          possibleKill = Piece(-1, -1);
         }
       });
 
