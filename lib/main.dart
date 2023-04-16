@@ -128,15 +128,6 @@ class _MyHomePageState extends State<MyHomePage> {
   // Current Turn
   int Turn = 0; // 0 White, 1 Black;
 
-  // White Points
-  int WhitePoints = 0;
-
-  // Black Points
-  int BlackPoints = 0;
-
-  // Is Game Over
-  bool GameOver = false;
-
   // Selected Row
   int SelectedRow = -1;
 
@@ -1021,9 +1012,6 @@ class Piece {
   // Piece Color
   int Team = -1; // 0 White, 1 Black
 
-  // How many points the piece is worth
-  int Points = 0;
-
   // Selected
   bool Selected = false;
 
@@ -1067,8 +1055,6 @@ class Piece {
     // Set Piece Icon and Points
     switch (Type) {
       case (0): // Pawn
-        Points = 1;
-
         ChessPiece = Container(
           decoration: BoxDecoration(
             image: DecorationImage(
@@ -1081,8 +1067,6 @@ class Piece {
         break;
 
       case (1): // Knight
-        Points = 3;
-
         ChessPiece = Container(
           decoration: BoxDecoration(
             image: DecorationImage(
@@ -1097,8 +1081,6 @@ class Piece {
         break;
 
       case (2): // Bishop
-        Points = 3;
-
         ChessPiece = Container(
           decoration: BoxDecoration(
             image: DecorationImage(
@@ -1111,7 +1093,6 @@ class Piece {
         break;
 
       case (3): // Rook
-        Points = 5;
         ChessPiece = Container(
           decoration: BoxDecoration(
             image: DecorationImage(
@@ -1124,7 +1105,6 @@ class Piece {
         break;
 
       case (4): // Queen
-        Points = 9;
         ChessPiece = Container(
           decoration: BoxDecoration(
             image: DecorationImage(
@@ -1137,8 +1117,6 @@ class Piece {
         break;
 
       case (5): // King
-        Points = 999;
-
         ChessPiece = Container(
           decoration: BoxDecoration(
             image: DecorationImage(
