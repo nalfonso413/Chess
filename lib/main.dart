@@ -235,8 +235,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
     // Create possibleMoves
     List possibleMoves = [];
-
+    int counter = 0;
     // Post Turn Toggle Check
+
     if (Turn == 1) {
       // Remove EnPassants if applicable
       if (EnPassantBlackPawn.length > 0) {
@@ -245,8 +246,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
       // Check if player is in Check
       FindIfPlayerInCheck(WhiteDangerZones, Piece.BlackKing);
-
-      possibleMoves = FindPiecePossibleMoves(Piece.BlackKing);
     } else {
       // Remove EnPassants if applicable
       if (EnPassantWhitePawn.length > 0) {
@@ -255,15 +254,38 @@ class _MyHomePageState extends State<MyHomePage> {
 
       // Check if player is in Check
       FindIfPlayerInCheck(BlackDangerZones, Piece.WhiteKing);
-
-      possibleMoves = FindPiecePossibleMoves(Piece.WhiteKing);
     }
 
-    // Check for checkmate
-    if (Piece.WhiteKing.Checkmated || Piece.BlackKing.Checkmated) {
-      SetInCheckmate(true);
-      //print("InCheckmate: ${InCheckmate}");
+    // Checkmate check
+    if (InCheck) {
+      // Black Team Checkmate
+      if (Turn == 1) {
+        // print("${SelectedPiece.Row}${SelectedPiece.Column}");
+        Piece.BlackTeam.forEach((element) {
+          possibleMoves = FindPiecePossibleMoves(element);
+          if (possibleMoves.isEmpty) {
+            counter++;
+          }
+        });
+
+        if (counter == Piece.BlackTeam.length) {
+          SetInCheckmate(true);
+        }
+      } else {
+        // print("${SelectedPiece.Row}${SelectedPiece.Column}");
+        Piece.WhiteTeam.forEach((element) {
+          possibleMoves = FindPiecePossibleMoves(element);
+          if (possibleMoves.isEmpty) {
+            counter++;
+          }
+        });
+
+        if (counter == Piece.WhiteTeam.length) {
+          SetInCheckmate(true);
+        }
+      }
     }
+    // if in check, king has no possible moves, and other pieces cannot block
   }
 
   // Find if a player is in check
@@ -440,12 +462,10 @@ class _MyHomePageState extends State<MyHomePage> {
         PossibleMoves.clear();
 
         // Get Selection Variables
-        if (!CanPromote) {
-          if (!InCheck || (InCheck && board[row][col].Type == 5)) {
-            SelectedRow = row;
-            SelectedColumn = col;
-            SelectedPiece = board[SelectedRow][SelectedColumn];
-          }
+        if (!CanPromote || !InCheckmate) {
+          SelectedRow = row;
+          SelectedColumn = col;
+          SelectedPiece = board[SelectedRow][SelectedColumn];
         }
 
         if (SelectedRow != -1 &&
@@ -528,7 +548,6 @@ class _MyHomePageState extends State<MyHomePage> {
     List possibleMoves = [];
     // Get Pieces Moves
     List PieceMoves = p.CheckMoves();
-
     // Piece Specific Moves
     switch (p.Type) {
       case 0: // Pawn (Kill Move)
@@ -745,10 +764,6 @@ class _MyHomePageState extends State<MyHomePage> {
         for (int i = 0; i < remove.length; i++) {
           possibleMoves.remove(remove[i]);
         }
-
-        if (possibleMoves.isEmpty) {
-          p.Checkmated = true;
-        }
       }
     }
     // Prevent pieces from making moves that will place the King in Check
@@ -759,20 +774,29 @@ class _MyHomePageState extends State<MyHomePage> {
       Piece king = Turn == 0 ? Piece.WhiteKing : Piece.BlackKing;
       Piece possibleKill = Piece(-1, -1);
       team = Turn == 0 ? Piece.BlackTeam : Piece.WhiteTeam;
-
+      int originalRow = p.Row;
+      int originalCol = p.Column;
       possibleMoves.forEach((possibleMovesElement) {
-        board[SelectedPiece.Row][SelectedPiece.Column] = Piece(-1, -1);
-        SelectedPiece.Row = possibleMovesElement[0];
-        SelectedPiece.Column = possibleMovesElement[1];
-        if (!board[SelectedPiece.Row][SelectedPiece.Column].IsEmpty()) {
-          possibleKill = board[SelectedPiece.Row][SelectedPiece.Column];
+        // Prepare pre-movement
+        board[p.Row][p.Column] = Piece(-1, -1);
+        p.Row = possibleMovesElement[0];
+        p.Column = possibleMovesElement[1];
+
+        // If this move will kill someone, save the piece and remove them from the team temporarily
+        if (!board[p.Row][p.Column].IsEmpty()) {
+          possibleKill = board[p.Row][p.Column];
           team.remove(possibleKill);
         }
-        board[SelectedPiece.Row][SelectedPiece.Column] = SelectedPiece;
+
+        // Move the Piece
+        board[p.Row][p.Column] = p;
+
+        // Find Danger Zones
         dangerZone = FindDangerZone(team, board);
         // print(dangerZone);
         // print("---");
 
+        // For each danger zone, if there is a match then add it to remove
         dangerZone.forEach((dangerZoneElement) {
           if ((dangerZoneElement[0] == king.Row) &&
               (dangerZoneElement[1] == king.Column)) {
@@ -780,7 +804,6 @@ class _MyHomePageState extends State<MyHomePage> {
             //print(dangerZoneElement);
           }
         });
-
         // Reset board
         for (int i = 0; i < board.length; i++) {
           for (int j = 0; j < board[i].length; j++) {
@@ -807,8 +830,9 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       });
 
-      SelectedPiece.Row = SelectedRow;
-      SelectedPiece.Column = SelectedColumn;
+      // Realign piece
+      p.Row = originalRow;
+      p.Column = originalCol;
 
       // Reset board
       for (int i = 0; i < board.length; i++) {
@@ -832,7 +856,7 @@ class _MyHomePageState extends State<MyHomePage> {
       // Remove Danger Zones
       for (int i = 0; i < remove.length; i++) {
         possibleMoves.remove(remove[i]);
-        print("Removed: ${remove[i]}");
+        //print("Removed: ${remove[i]}");
       }
     }
 
