@@ -10,11 +10,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Chess',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Chess'),
     );
   }
 }
@@ -217,6 +217,13 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  // Sets InCheckmate
+  void SetInCheckmate(bool b) {
+    setState(() {
+      InCheckmate = b;
+    });
+  }
+
   /// Functions
 
   // Switch Turn
@@ -235,6 +242,9 @@ class _MyHomePageState extends State<MyHomePage> {
       Turn = Turn == 0 ? 1 : 0;
     });
 
+    // Create possibleMoves
+    List possibleMoves = [];
+
     // Post Turn Toggle Check
     if (Turn == 1) {
       // Remove EnPassants if applicable
@@ -244,6 +254,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
       // Check if player is in Check
       FindIfPlayerInCheck(WhiteDangerZones, Piece.BlackKing);
+
+      possibleMoves = FindPiecePossibleMoves(Piece.BlackKing);
     } else {
       // Remove EnPassants if applicable
       if (EnPassantWhitePawn.length > 0) {
@@ -252,6 +264,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
       // Check if player is in Check
       FindIfPlayerInCheck(BlackDangerZones, Piece.WhiteKing);
+
+      possibleMoves = FindPiecePossibleMoves(Piece.WhiteKing);
+    }
+
+    // Check for checkmate
+    if (Piece.WhiteKing.Checkmated || Piece.BlackKing.Checkmated) {
+      SetInCheckmate(true);
+      //print("InCheckmate: ${InCheckmate}");
     }
   }
 
@@ -313,13 +333,12 @@ class _MyHomePageState extends State<MyHomePage> {
           if (board[row][col].Team == 0) {
             if (Piece.WhiteTeam.contains(board[row][col])) {
               Piece.WhiteTeam.remove(board[row][col]);
-              print("White Team Length: ${Piece.WhiteTeam.length} ");
+              //print("White Team Length: ${Piece.WhiteTeam.length} ");
             }
           } else if (board[row][col].Team == 1) {
             if (Piece.BlackTeam.contains(board[row][col])) {
               Piece.BlackTeam.remove(board[row][col]);
-
-              print("Black Team Length: ${Piece.BlackTeam.length} ");
+              //print("Black Team Length: ${Piece.BlackTeam.length} ");
             }
           }
         }
@@ -705,30 +724,40 @@ class _MyHomePageState extends State<MyHomePage> {
 
     // Prevent King from making moves that will place them in Check
     if (p.Type == 5) {
-      //print("Possible Moves: ${possibleMoves}");
-      List dangerZone = [];
+//print("Possible Moves: ${possibleMoves}");
+      if (possibleMoves.isNotEmpty) {
+        // Create Danger Zone
+        List dangerZone = [];
 
-      if (Turn == 0) {
-        dangerZone = BlackDangerZones;
-      } else {
-        dangerZone = WhiteDangerZones;
-      }
-
-      List remove = [];
-      for (int i = 0; i < dangerZone.length; i++) {
-        for (int j = 0; j < possibleMoves.length; j++) {
-          if (dangerZone[i][0] == possibleMoves[j][0] &&
-              dangerZone[i][1] == possibleMoves[j][1]) {
-            remove.add(possibleMoves[j]);
-          }
-
-          //print("Danger Zone: ${dangerZone[i]}");
-          //print("Possible Moves: ${possibleMoves[j]}");
+        // Get Danger Zones of Enemy
+        if (Turn == 0) {
+          dangerZone = BlackDangerZones;
+        } else {
+          dangerZone = WhiteDangerZones;
         }
-      }
 
-      for (int i = 0; i < remove.length; i++) {
-        possibleMoves.remove(remove[i]);
+        // Add any possibleMoves that are equal to any of the dangerZones to remove
+        List remove = [];
+        for (int i = 0; i < dangerZone.length; i++) {
+          for (int j = 0; j < possibleMoves.length; j++) {
+            if (dangerZone[i][0] == possibleMoves[j][0] &&
+                dangerZone[i][1] == possibleMoves[j][1]) {
+              remove.add(possibleMoves[j]);
+            }
+
+            //print("Danger Zone: ${dangerZone[i]}");
+            //print("Possible Moves: ${possibleMoves[j]}");
+          }
+        }
+
+        // Remove any moves from possibleMoves
+        for (int i = 0; i < remove.length; i++) {
+          possibleMoves.remove(remove[i]);
+        }
+
+        if (possibleMoves.isEmpty) {
+          p.Checkmated = true;
+        }
       }
     }
     // Prevent pieces from making moves that will place the King in Check
@@ -814,128 +843,9 @@ class _MyHomePageState extends State<MyHomePage> {
         possibleMoves.remove(remove[i]);
         print("Removed: ${remove[i]}");
       }
-      /*
-      List remove = [];
-      List team = [];
-      List dangerZone = [];
-
-      // Get Appropriate King
-      Piece king = Piece(-1, -1);
-
-      // Create clone
-      List boardClone = [
-        [],
-        [],
-        [],
-        [],
-        [],
-        [],
-        [],
-        [],
-      ];
-
-      // Clone board
-      for (int i = 0; i < board.length; i++) {
-        for (int j = 0; j < board[i].length; j++) {
-          boardClone[i].add(Piece(board[i][j].Type, board[i][j].Team));
-          Piece.WhiteTeam.remove(boardClone[i][j]);
-          Piece.BlackTeam.remove(boardClone[i][j]);
-          // add pieces to proper team
-          if ((Turn == 0 && boardClone[i][j].Team == 1) ||
-              (Turn == 1 && boardClone[i][j].Team == 0)) {
-            //print("Piece Team: ${board[i][j].Team}");
-
-            if (boardClone[i][j].Type == 5) {
-              king = boardClone[i][j];
-            }
-            team.add(boardClone[i][j]);
-          }
-        }
-      }
-
-      for (int i = 0; i < boardClone.length; i++) {
-        print("Row $i");
-        for (int j = 0; j < boardClone[i].length; j++) {
-          print(
-              "Col: ${j} Team: ${boardClone[i][j].Team} Type: ${boardClone[i][j].Type}");
-        }
-      }
-
-      //print("Team Length: ${team.length}");
-
-      // Get Copy of SelectedPiece
-      Piece copyPiece = boardClone[SelectedPiece.Row][SelectedPiece.Column];
-
-      // Check possibleMoves' results
-      possibleMoves.forEach((element) {
-        // give killpossiblemoves function a list board to work with
-        boardClone[copyPiece.Row][copyPiece.Column] =
-        copyPiece.Row = element[0];
-        copyPiece.Column = element[1];
-        boardClone[copyPiece.Row][copyPiece.Column] = copyPiece;
-        dangerZone = FindDangerZone(team, boardClone);
-
-        // Check if any dangerzone is equal to the king's
-        dangerZone.forEach((dangerZoneElement) {
-          //print("Danger Zone Element: ${dangerZoneElement}");
-          if (dangerZoneElement[0] == king.Row &&
-              dangerZoneElement[1] == king.Column) {
-            remove.add([dangerZoneElement[0], dangerZoneElement[1]]);
-          }
-        });
-
-        //print("Remove Length: ${remove.length}");
-
-        // Reset boardClone
-        for (int i = 0; i < boardClone.length; i++) {
-          boardClone[i].clear();
-        }
-
-        team.clear();
-
-        // Clone board
-        for (int i = 0; i < board.length; i++) {
-          for (int j = 0; j < board[i].length; j++) {
-            boardClone[i].add(Piece(board[i][j].Type, board[i][j].Team));
-            Piece.WhiteTeam.remove(boardClone[i][j]);
-            Piece.BlackTeam.remove(boardClone[i][j]);
-            // add pieces to proper team
-            if ((Turn == 0 && boardClone[i][j].Team == 1) ||
-                (Turn == 1 && boardClone[i][j].Team == 0)) {
-              //print("Piece Team: ${board[i][j].Team}");
-
-              if (boardClone[i][j].Type == 5) {
-                king = boardClone[i][j];
-              }
-              team.add(boardClone[i][j]);
-            }
-          }
-        }
-      });
-
-      // Remove Danger Zones
-      for (int i = 0; i < remove.length; i++) {
-        possibleMoves.remove(remove[i]);
-        print("Removed: ${remove[i]}");
-      }
-
-      board[SelectedPiece.Row][SelectedPiece.Column] = SelectedPiece;
-      */
     }
 
     return possibleMoves;
-
-    // Check each possiblemove of a piece
-    // using a cloned board to check the dangerzones of each possiblemove
-
-    // problems of cloning a board
-    // the clone will just be a reference
-    // the clone will have to add new pieces that adds to the Piece class's total static order
-    // it needs to be reset at the beginning of each iteration, so this process will occur for each possiblemove UnU,,,
-    // if i use the original board as a simulator, then SelectedPiece will be a different piece
-
-    // if a possiblemove would result in a king getting check'd, add it to the remove list
-    // after its all done, remove all items from the remove list that are in the possiblemoves list
   }
 
   // Find all possible ways a piece can kill another piece
@@ -1096,6 +1006,8 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Column(children: [
         GetChessboardWidget(),
         promotionWidget(CanPromote, Turn, this),
+        checkWidget(InCheck, InCheckmate, Turn),
+        checkmateWidget(InCheckmate, Turn, this),
       ]),
     );
   }
@@ -1136,6 +1048,9 @@ class Piece {
   // Column Position
   int Column = -1;
 
+  // In Checkmate?
+  bool Checkmated = false;
+
   // Teams
   static List WhiteTeam = [];
   static List BlackTeam = [];
@@ -1155,10 +1070,12 @@ class Piece {
         Points = 1;
 
         ChessPiece = Container(
-          color: Team % 2 == 0 ? Colors.white : Colors.black,
-          child: Icon(
-            Icons.perm_identity,
-            color: Team % 2 == 0 ? Colors.black : Colors.white,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: Team == 0
+                  ? AssetImage("WhitePawn.png")
+                  : AssetImage("BlackPawn.png"),
+            ),
           ),
         );
         break;
@@ -1167,10 +1084,12 @@ class Piece {
         Points = 3;
 
         ChessPiece = Container(
-          color: Team % 2 == 0 ? Colors.white : Colors.black,
-          child: Icon(
-            Icons.snowshoeing,
-            color: Team % 2 == 0 ? Colors.black : Colors.white,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: Team == 0
+                  ? AssetImage("WhiteKnight.png")
+                  : AssetImage("BlackKnight.png"),
+            ),
           ),
         );
 
@@ -1181,10 +1100,12 @@ class Piece {
         Points = 3;
 
         ChessPiece = Container(
-          color: Team % 2 == 0 ? Colors.white : Colors.black,
-          child: Icon(
-            Icons.skip_next,
-            color: Team % 2 == 0 ? Colors.black : Colors.white,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: Team == 0
+                  ? AssetImage("WhiteBishop.png")
+                  : AssetImage("BlackBishop.png"),
+            ),
           ),
         );
         break;
@@ -1192,10 +1113,12 @@ class Piece {
       case (3): // Rook
         Points = 5;
         ChessPiece = Container(
-          color: Team % 2 == 0 ? Colors.white : Colors.black,
-          child: Icon(
-            Icons.masks,
-            color: Team % 2 == 0 ? Colors.black : Colors.white,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: Team == 0
+                  ? AssetImage("WhiteRook.png")
+                  : AssetImage("BlackRook.png"),
+            ),
           ),
         );
         break;
@@ -1203,10 +1126,12 @@ class Piece {
       case (4): // Queen
         Points = 9;
         ChessPiece = Container(
-          color: Team % 2 == 0 ? Colors.white : Colors.black,
-          child: Icon(
-            Icons.female,
-            color: Team % 2 == 0 ? Colors.black : Colors.white,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: Team == 0
+                  ? AssetImage("WhiteQueen.png")
+                  : AssetImage("BlackQueen.png"),
+            ),
           ),
         );
         break;
@@ -1215,10 +1140,12 @@ class Piece {
         Points = 999;
 
         ChessPiece = Container(
-          color: Team % 2 == 0 ? Colors.white : Colors.black,
-          child: Icon(
-            Icons.male,
-            color: Team % 2 == 0 ? Colors.black : Colors.white,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: Team == 0
+                  ? AssetImage("WhiteKing.png")
+                  : AssetImage("BlackKing.png"),
+            ),
           ),
         );
 
@@ -1687,4 +1614,147 @@ Visibility promotionWidget(
       ],
     ),
   );
+}
+
+// Check Widget
+Visibility checkWidget(bool isVisible, bool inCheckmate, int turn) {
+  return Visibility(
+    visible: isVisible && !inCheckmate,
+    child: turn == 0 ? Text("White is in Check") : Text("Black is in Check"),
+  );
+}
+
+Visibility checkmateWidget(
+    bool isVisible, int turn, _MyHomePageState homepage) {
+  return Visibility(
+      visible: isVisible,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          turn == 0
+              ? Text("White is in Checkmate")
+              : Text("Black is in Checkmate"),
+          ElevatedButton(
+            onPressed: () {
+              // Set Empty Piece
+              homepage.SetSelectedPiece(-1, -1, Piece(-1, -1));
+
+              // Reset Teams
+              Piece.WhiteTeam.clear();
+              Piece.BlackTeam.clear();
+
+              // Reset Enpassants
+              homepage.EnPassantWhitePawn.clear();
+              homepage.EnPassantBlackPawn.clear();
+
+              // Reset Promoter
+              homepage.SetCanPromote(false);
+
+              // Reset DangerZones
+              homepage.WhiteDangerZones.clear();
+              homepage.BlackDangerZones.clear();
+
+              // Reset Check States
+              homepage.SetInCheck(false);
+              homepage.SetInCheckmate(false);
+
+              // Reset board
+              homepage.board = [
+                // Row 1
+                [
+                  Piece(3, 1), // Black Rook
+                  Piece(1, 1), // Black Knight
+                  Piece(2, 1), // Black Bishop
+                  Piece(4, 1), // Black Queen
+                  Piece(5, 1), // Black King
+                  Piece(2, 1), // Black Bishop
+                  Piece(1, 1), // Black Knight
+                  Piece(3, 1), // Black Rook
+                ],
+                // Row 2
+                [
+                  Piece(0, 1), // Black Pawn
+                  Piece(0, 1), // Black Pawn
+                  Piece(0, 1), // Black Pawn
+                  Piece(0, 1), // Black Pawn
+                  Piece(0, 1), // Black Pawn
+                  Piece(0, 1), // Black Pawn
+                  Piece(0, 1), // Black Pawn
+                  Piece(0, 1), // Black Pawn
+                ],
+                // Row 3
+                [
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                ],
+                // Row 4
+                [
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                ],
+                // Row 5
+                [
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                ],
+                // Row 6
+                [
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                  Piece(-1, -1),
+                ],
+                // Row 7
+                [
+                  Piece(0, 0), // White Pawn
+                  Piece(0, 0), // White Pawn
+                  Piece(0, 0), // White Pawn
+                  Piece(0, 0), // White Pawn
+                  Piece(0, 0), // White Pawn
+                  Piece(0, 0), // White Pawn
+                  Piece(0, 0), // White Pawn
+                  Piece(0, 0), // White Pawn
+                ],
+                // Row 8
+                [
+                  Piece(3, 0), // White Rook
+                  Piece(1, 0), // White Knight
+                  Piece(2, 0), // White Bishop
+                  Piece(4, 0), // White Queen
+                  Piece(5, 0), // White King
+                  Piece(2, 0), // White Bishop
+                  Piece(1, 0), // White Knight
+                  Piece(3, 0), // White Rook
+                ],
+              ];
+
+              // Reset turn
+              homepage.Turn = 0;
+            },
+            child: Text("Reset Game"),
+          )
+        ],
+      ));
 }

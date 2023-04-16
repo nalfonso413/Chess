@@ -53,12 +53,24 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  assets:
+   - assets/BlackKing.png
+   - assets/BlackQueen.png
+   - assets/BlackBishop.png
+   - assets/BlackRook.png
+   - assets/BlackKnight.png
+   - assets/BlackPawn.png
+   - assets/WhiteKing.png
+   - assets/WhiteQueen.png
+   - assets/WhiteBishop.png
+   - assets/WhiteRook.png
+   - assets/WhiteKnight.png
+   - assets/WhitePawn.png
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
