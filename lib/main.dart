@@ -346,12 +346,12 @@ class _MyHomePageState extends State<MyHomePage> {
           if (board[row][col].Team == 0) {
             if (Piece.WhiteTeam.contains(board[row][col])) {
               Piece.WhiteTeam.remove(board[row][col]);
-              //print("White Team Length: ${Piece.WhiteTeam.length} ");
+              print("White Team Length: ${Piece.WhiteTeam.length} ");
             }
           } else if (board[row][col].Team == 1) {
             if (Piece.BlackTeam.contains(board[row][col])) {
               Piece.BlackTeam.remove(board[row][col]);
-              //print("Black Team Length: ${Piece.BlackTeam.length} ");
+              print("Black Team Length: ${Piece.BlackTeam.length} ");
             }
           }
         }
@@ -379,10 +379,16 @@ class _MyHomePageState extends State<MyHomePage> {
             // En Passant Kill
             if (SelectedPiece.Team == 0) {
               if (board[row + 1][col].EnPassant) {
+                Piece.BlackTeam.remove(board[row + 1][col]);
+                print("Black Team Length: ${Piece.BlackTeam.length} ");
+
                 board[row + 1][col] = Piece(-1, -1);
               }
             } else if (SelectedPiece.Team == 1) {
               if (board[row - 1][col].EnPassant) {
+                Piece.WhiteTeam.remove(board[row - 1][col]);
+                print("White Team Length: ${Piece.WhiteTeam.length} ");
+
                 board[row - 1][col] = Piece(-1, -1);
               }
             }
@@ -1589,28 +1595,40 @@ Visibility promotionWidget(
           onPressed: () {
             Promote(4);
           },
-          child: Text("Queen"),
+          child: Text(
+            "Queen",
+            style: TextStyle(color: Turn == 1 ? Colors.white : Colors.black),
+          ),
           style: promoteButtonStyle,
         ),
         ElevatedButton(
           onPressed: () {
             Promote(3);
           },
-          child: Text("Rook"),
+          child: Text(
+            "Rook",
+            style: TextStyle(color: Turn == 1 ? Colors.white : Colors.black),
+          ),
           style: promoteButtonStyle,
         ),
         ElevatedButton(
           onPressed: () {
             Promote(2);
           },
-          child: Text("Bishop"),
+          child: Text(
+            "Bishop",
+            style: TextStyle(color: Turn == 1 ? Colors.white : Colors.black),
+          ),
           style: promoteButtonStyle,
         ),
         ElevatedButton(
           onPressed: () {
             Promote(1);
           },
-          child: Text("Knight"),
+          child: Text(
+            "Knight",
+            style: TextStyle(color: Turn == 1 ? Colors.white : Colors.black),
+          ),
           style: promoteButtonStyle,
         ),
       ],
