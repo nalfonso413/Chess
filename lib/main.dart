@@ -346,12 +346,12 @@ class _MyHomePageState extends State<MyHomePage> {
           if (board[row][col].Team == 0) {
             if (Piece.WhiteTeam.contains(board[row][col])) {
               Piece.WhiteTeam.remove(board[row][col]);
-              print("White Team Length: ${Piece.WhiteTeam.length} ");
+              //print("White Team Length: ${Piece.WhiteTeam.length} ");
             }
           } else if (board[row][col].Team == 1) {
             if (Piece.BlackTeam.contains(board[row][col])) {
               Piece.BlackTeam.remove(board[row][col]);
-              print("Black Team Length: ${Piece.BlackTeam.length} ");
+              //print("Black Team Length: ${Piece.BlackTeam.length} ");
             }
           }
         }
