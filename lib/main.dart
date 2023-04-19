@@ -988,7 +988,6 @@ class _MyHomePageState extends State<MyHomePage> {
               // If piece is not a Pawn
               if ((p.Type != 0) ||
                   // OR if Piece IS a pawn AND current move is [-1, 0] or [1, 0]
-
                   (p.Type == 0 &&
                       ((PieceMoves[i][j][0] != -1 ||
                               PieceMoves[i][j][0] != 1) &&
@@ -998,11 +997,22 @@ class _MyHomePageState extends State<MyHomePage> {
                   p.Column + PieceMoves[i][j][1]
                 ]);
 
+                // if Piece cannot jump AND (piece is not a king OR if it is a king it is the same as the piece's team)
                 if (!p.CanJump &&
-                    chessboard[(p.Row + PieceMoves[i][j][0]).toInt()]
-                                [(p.Column + PieceMoves[i][j][1]).toInt()]
-                            .Type !=
-                        5) {
+                    ((chessboard[(p.Row + PieceMoves[i][j][0]).toInt()]
+                                    [(p.Column + PieceMoves[i][j][1]).toInt()]
+                                .Type !=
+                            5) ||
+                        ((chessboard[(p.Row + PieceMoves[i][j][0]).toInt()][
+                                        (p.Column + PieceMoves[i][j][1])
+                                            .toInt()]
+                                    .Type ==
+                                5) &&
+                            (chessboard[(p.Row + PieceMoves[i][j][0]).toInt()][
+                                        (p.Column + PieceMoves[i][j][1])
+                                            .toInt()]
+                                    .Team ==
+                                p.Team)))) {
                   keepGoing = false;
                 }
                 //print("   3: $r , $c");
@@ -1024,12 +1034,17 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Column(children: [
-        GetChessboardWidget(),
-        promotionWidget(CanPromote, Turn, this),
-        checkWidget(InCheck, InCheckmate, Turn),
-        checkmateWidget(InCheckmate, Turn, this),
-      ]),
+      body: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Column(children: [
+            GetChessboardWidget(),
+            promotionWidget(CanPromote, Turn, this),
+            checkWidget(InCheck, InCheckmate, Turn),
+            checkmateWidget(InCheckmate, Turn, this),
+          ], mainAxisAlignment: MainAxisAlignment.center),
+        ],
+      ),
     );
   }
 }
@@ -1578,8 +1593,17 @@ Visibility promotionWidget(
           : MaterialStateProperty.all<Color>(Colors.black));
 
   void Promote(int type) {
+    if (homepage.SelectedPiece.Team == 0) {
+      Piece.WhiteTeam.remove(homepage.SelectedPiece);
+    } else {
+      Piece.BlackTeam.remove(homepage.SelectedPiece);
+    }
     homepage.board[homepage.SelectedRow][homepage.SelectedColumn] =
         Piece(type, homepage.Turn);
+    homepage.board[homepage.SelectedRow][homepage.SelectedColumn].Row =
+        homepage.SelectedRow;
+    homepage.board[homepage.SelectedRow][homepage.SelectedColumn].Column =
+        homepage.SelectedColumn;
     homepage.SetSelectedPiece(-1, -1, Piece(-1, -1));
     homepage.SetCanPromote(false);
     homepage.ToggleTurn();
